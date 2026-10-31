@@ -75,7 +75,11 @@ function wallTexture(){
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
 }
 const wallScan=wallTexture();brick.map=wallScan;brick.bumpMap=wallScan;brick.bumpScale=.018;brick.color.set('#deded9');
-box(22,.2,25,0,.08,-12.4,floor,interior);box(22,7.3,.18,0,3.75,-24.9,brick,interior);
+box(22,.2,25,0,.08,-12.4,floor,interior);
+// Rear wall is continuous except for the framed doorway.
+box(9.8,7.3,.18,-6.1,3.75,-24.9,brick,interior);
+box(9.8,7.3,.18,6.1,3.75,-24.9,brick,interior);
+box(2.4,4.15,.18,0,5.32,-24.9,brick,interior);
 box(.18,7.3,25,-10.95,3.75,-12.4,brick,interior);box(.18,7.3,25,10.95,3.75,-12.4,brick,interior);
 const ceiling=mat('#868b89',.97,0);ceiling.userData.worldScale=4;box(22,.18,25,0,7.44,-12.4,ceiling,interior);
 const beam=mat('#252a2c',.52,.68),wood=mat('#6b4934',.7),leather=mat('#483126',.85),chrome=mat('#969a9b',.25,.85);
@@ -99,8 +103,16 @@ function workshopBench(x,z,length=5.7){
  }
  for(let i=0;i<4;i++){const dx=x-length/2+.7+i*1.4;box(.25,.13,.22,dx,1.4,z,mat('#3b4243',.48,.5),interior)}
 }
-workshopBench(6.35,-19.9,6.3);
-workshopBench(6.35,-9.9,6.3);
+// Turn the long benches against the right-hand wall, leaving the central aisle free.
+function wallBench(z){
+ const start=interior.children.length;workshopBench(6.35,z,6.3);
+ const pieces=interior.children.splice(start);
+ const group=new THREE.Group();group.position.set(9.75,0,z);
+ for(const piece of pieces){piece.position.x-=6.35;piece.position.z-=z;group.add(piece)}
+ group.rotation.y=Math.PI/2;interior.add(group);
+}
+wallBench(-19.9);
+wallBench(-9.9);
 for(const z of [-12.6,-15.7]){
  box(1.25,2.35,.8,9.5,1.35,z,cabinet,interior);
  for(let i=0;i<5;i++){box(.9,.035,.05,9.5,.4+i*.4,z+.42,chrome,interior);box(.08,.07,.07,9.08,.4+i*.4,z+.46,metal,interior)}
@@ -109,17 +121,18 @@ for(const z of [-5,-10,-15,-20]){box(.8,.85,.42,-10.55,1.15,z,mat('#818681',.9),
 // Spacious separate lounge: sofas FACE the television, never below it.
 const loungeLeather=mat('#532e26',.72),rug=mat('#79685d',.94);
 box(5.8,.035,4.7,-4.3,.21,-15.7,rug,interior);
-box(3.9,.38,1.15,-4.8,.56,-17.6,loungeLeather,interior);
-box(3.9,1.12,.28,-4.8,1.15,-18.13,loungeLeather,interior);
-for(const x of [-6.65,-2.95])box(.28,.7,1.2,x,.85,-17.6,loungeLeather,interior);
+box(3.9,.38,1.15,-4.8,.56,-23.55,loungeLeather,interior);
+box(3.9,1.12,.28,-4.8,1.15,-24.13,loungeLeather,interior);
+for(const x of [-6.65,-2.95])box(.28,.7,1.2,x,.85,-23.55,loungeLeather,interior);
 box(2.1,.38,1.1,-7.3,.55,-15.3,loungeLeather,interior);
 box(.28,1.0,1.1,-8.2,1.1,-15.3,loungeLeather,interior);
 box(1.65,.15,.9,-4.8,.68,-15.25,wood,interior);
 for(const x of [-5.45,-4.15])box(.11,.5,.11,x,.39,-15.25,beam,interior);
-// TV directly in the sofa sightline, mounted on rear-facing divider
-box(4.2,3.8,.22,-4.8,2.05,-12.65,mat('#363b3b'),interior);
-box(3.2,1.95,.16,-4.8,3.05,-12.84,beam,interior);
-box(3.02,1.76,.02,-4.8,3.05,-12.94,new THREE.MeshStandardMaterial({color:0x121d29,emissive:0x1d3044,emissiveIntensity:.12,roughness:.28}),interior);
+// TV and low console on the left wall, not a divider in the middle of the room.
+const tvGroup=new THREE.Group();tvGroup.position.set(-10.55,0,-19.7);tvGroup.rotation.y=Math.PI/2;interior.add(tvGroup);
+box(4.2,3.8,.22,0,2.05,0,mat('#363b3b'),tvGroup);
+box(3.2,1.95,.16,0,3.05,.18,beam,tvGroup);
+box(3.02,1.76,.02,0,3.05,.28,new THREE.MeshStandardMaterial({color:0x121d29,emissive:0x1d3044,emissiveIntensity:.12,roughness:.28}),tvGroup);
 // Small private wall bar with exactly two stools and a minibar
 box(3.5,.19,.8,5.5,1.5,-15.3,wood,interior);
 for(const x of [4,7])box(.13,1.43,.13,x,.77,-15.3,beam,interior);
@@ -127,11 +140,12 @@ for(const x of [4.85,6.25]){box(.58,.12,.56,x,.95,-14.15,loungeLeather,interior)
 box(.85,1.25,.78,7.8,.7,-15.35,metal,interior);box(.65,.52,.035,7.8,.93,-14.94,glass,interior);
 
 // Door to the adjoining room on the back wall, clearly visible and framed
-box(1.8,3.05,.22,-.15,1.57,-20.78,mat('#282e32',.5,.55),interior);
-box(1.48,2.76,.075,-.15,1.48,-20.62,wood,interior);
-box(.09,.09,.14,.42,1.43,-20.5,chrome,interior);
-for(const x of [-1.11,.81])box(.09,3.18,.3,x,1.6,-20.52,beam,interior);
-box(2.05,.12,.32,-.15,3.19,-20.52,beam,interior);
+// The adjoining-room door is built into the actual rear wall.
+box(2.32,3.14,.12,0,1.67,-24.76,mat('#22282c',.55,.5),interior);
+box(1.97,2.86,.08,0,1.52,-24.66,wood,interior);
+box(.09,.09,.15,.77,1.4,-24.57,chrome,interior);
+for(const x of [-1.17,1.17])box(.11,3.23,.34,x,1.64,-24.68,beam,interior);
+box(2.48,.12,.35,0,3.31,-24.68,beam,interior);
 // Pickup and work area have ample walking clearance
 // Pickup: Fahrzeugkörper, Fahrerkabine, Reifen, Kühler, Licht
 const car=new THREE.Group();interior.add(car);car.position.set(-5.2,.05,-5.8);car.scale.setScalar(1.18);
@@ -172,10 +186,10 @@ for(let z=-4;z>-24;z-=5)box(21.7,.001,.005,0,.181,z,jointMaterial,interior);
 for(const x of [-6,0,6])box(.005,.001,24,x,.181,-12.3,jointMaterial,interior);
 // Sofa cushions and seams soften the previous block geometry.
 for(const x of [-5.98,-4.8,-3.62]){
- box(1.1,.17,.91,x,.82,-17.55,mat('#674638',.93),interior);
- const cushion=box(1.08,.58,.23,x,1.23,-17.9,mat('#624032',.95),interior);cushion.rotation.x=-.12;
+ box(1.1,.17,.91,x,.82,-23.5,mat('#674638',.93),interior);
+ const cushion=box(1.08,.58,.23,x,1.23,-23.85,mat('#624032',.95),interior);cushion.rotation.x=-.12;
 }
-for(const x of [-6.25,-3.3]){const pillow=box(.5,.48,.18,x,1.12,-17.7,mat('#b5a28d',1),interior);pillow.rotation.z=x<-5?.22:-.22}
+for(const x of [-6.25,-3.3]){const pillow=box(.5,.48,.18,x,1.12,-23.65,mat('#b5a28d',1),interior);pillow.rotation.z=x<-5?.22:-.22}
 const loungeLight=new THREE.PointLight(0xffc58b,20,10,2);loungeLight.position.set(-5,4.7,-17);interior.add(loungeLight);
 const barLight=new THREE.PointLight(0xffcf9a,20,10,2);barLight.position.set(5.5,4.8,-15.3);interior.add(barLight);
 // Pendant shades and warm pools above the two-seat private bar.
@@ -354,7 +368,7 @@ if(inside){
  velocityZ+=(targetZ-velocityZ)*acceleration;
  const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
  const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-23.6,-1.6);
- const obstacles=[[-5.2,-5.8,2.15,3.35],[-4.8,-17.6,2.4,1.15],[-7.3,-15.3,1.45,1.05],[-4.8,-12.65,2.45,.4],[6.35,-19.9,3.6,.8],[6.35,-9.9,3.6,.8],[5.5,-15.3,2.15,.95]];
+ const obstacles=[[-5.2,-5.8,2.15,3.35],[-4.8,-23.55,2.4,1.15],[-7.3,-15.3,1.45,1.05],[-4.8,-12.65,2.45,.4],[6.35,-19.9,3.6,.8],[6.35,-9.9,3.6,.8],[5.5,-15.3,2.15,.95]];
  const blocked=(x,z)=>obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz);
  if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
  if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;
