@@ -154,10 +154,13 @@ function score(fr){let total=0,out=[];const rolls=fr.flatMap(f=>f.rolls);let i=0
   else{if(r.length<2){out.push(null);i+=r.length;continue}total+=r[0]+r[1];i+=2}
   out.push(total)}
  return out}
-function marks(r,last){const s=[];for(let k=0;k<r.length;k++){const v=r[k],prev=r[k-1];
-  if(v===10&&(k===0||last&&(prev===10||(k===2&&r[0]+r[1]===10))))s.push('X');
-  else if(k>0&&prev!==10&&prev+v===10&&!(last&&k===2&&r[0]+r[1]!==10&&r[0]!==10))s.push('/');
-  else s.push(v===0?'–':v)}return s}
+function marks(r,last){const m=v=>v===10?'X':v===0?'–':v;
+ if(!last){if(r[0]===10)return['X'];return r.map((v,k)=>k===1&&r[0]+v===10?'/':v===0?'–':v)}
+ const s=[];for(let k=0;k<r.length;k++){const v=r[k];
+  // a ball after a strike or spare starts fresh; otherwise it can complete a spare
+  const fresh=k===0||r[k-1]===10||(k===2&&r[0]!==10&&r[0]+r[1]===10);
+  s.push(fresh?m(v):(r[k-1]+v===10?'/':v===0?'–':v))}
+ return s}
 function renderScore(){const box=$('#score');box.innerHTML='';
  if(level.mode==='spares'){level.setups.forEach((s,i)=>{const d=document.createElement('div');d.className='fr'+(i===frameIdx?' cur':'');const res=spareResults[i];d.innerHTML=`<div class="r">${i+1}</div><div class="t">${res===undefined?'':res?'✓':'✗'}</div>`;box.appendChild(d)});return}
  const sc=score(frames);frames.forEach((f,i)=>{const d=document.createElement('div');d.className='fr'+(i===frameIdx?' cur':'');d.innerHTML=`<div class="r">${marks(f.rolls,i===frames.length-1).join(' ')}</div><div class="t">${sc[i]??''}</div>`;box.appendChild(d)})}
