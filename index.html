@@ -1,6 +1,6 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricardos Revier</title><style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0c1118;color:#f1e8dc;font-family:system-ui,Arial}canvas{display:block;touch-action:none}#ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(14px,3vw,28px)}header{display:flex;justify-content:space-between;align-items:start;gap:10px}h1{margin:0;font-size:clamp(19px,4vw,33px);letter-spacing:.12em;font-weight:900;text-shadow:0 3px 15px #000}header small{font-size:10px;letter-spacing:.23em;color:#e7b47e}#state{background:#10182099;border:1px solid #ffffff35;border-radius:24px;padding:9px 13px;font-size:11px;backdrop-filter:blur(12px)}footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}button{pointer-events:auto;background:linear-gradient(130deg,#e6b780,#a66e40);border:1px solid #f3ce9e;border-radius:30px;color:#1b1411;padding:13px 22px;font-size:13px;font-weight:850;letter-spacing:.07em;box-shadow:0 8px 25px #0009}button:active{transform:scale(.98)}#help{font-size:11px;color:#f4e4d4;text-shadow:0 2px 8px #000;text-align:center}#progress{position:fixed;bottom:0;left:0;height:3px;width:0;background:#ffc583;transition:width .2s}#info{position:fixed;left:50%;top:19%;transform:translateX(-50%);font-size:11px;letter-spacing:.14em;text-shadow:0 2px 12px #000;opacity:.9;text-align:center;pointer-events:none;white-space:nowrap}@media(max-width:600px){#info{top:16%;font-size:9px}footer{flex-direction:column;gap:7px}button{padding:12px 20px}}
- #walk{position:fixed;left:16px;bottom:115px;display:none;z-index:5;pointer-events:auto;gap:7px;align-items:center}#walk button{min-width:52px;height:52px;padding:0;border-radius:14px;background:#202c31d9;color:#fff;border:1px solid #ffffff77;font-size:22px;touch-action:none}#walk .pair{display:flex;flex-direction:column;gap:7px}#walk.visible{display:flex}@media(max-width:600px){#walk{bottom:115px;left:12px}#walk button{min-width:49px;height:49px}} </style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div><div id="credits" style="position:fixed;right:8px;bottom:5px;font-size:8px;opacity:.45;pointer-events:none">Auto &amp; Sofa: Darmstadt Graphics Group, CC BY 4.0</div>
+ #walk{position:fixed;left:16px;bottom:115px;display:none;z-index:5;pointer-events:auto;gap:7px;align-items:center}#walk button{min-width:52px;height:52px;padding:0;border-radius:14px;background:#202c31d9;color:#fff;border:1px solid #ffffff77;font-size:22px;touch-action:none}#walk .pair{display:flex;flex-direction:column;gap:7px}#walk.visible{display:flex}@media(max-width:600px){#walk{bottom:115px;left:12px}#walk button{min-width:49px;height:49px}} </style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div><div id="credits" style="position:fixed;right:8px;bottom:5px;font-size:8px;opacity:.45;pointer-events:none">RAM: maregajavier · Sofa: Darmstadt Graphics Group · CC BY 4.0</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -8,6 +8,7 @@ import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUnifo
 RectAreaLightUniformsLib.init();
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -367,9 +368,9 @@ function place(url,x,y,z,rotY=0,scale=1,parent=interior){
 }
 const floorTop=.18;
 const models=Promise.allSettled([
- place('./assets/models/car.glb',-5.2,floorTop,-5.8,0,1).then(o=>{car.visible=false;
-  // Temporary: paint it Ricardo-orange until the RAM model arrives.
-  o.traverse(c=>{if(c.isMesh&&c.material.color){const k=c.material.color;if(k.r>.35&&k.g<.25&&k.b<.25){c.material=c.material.clone();c.material.color.set('#e0601a')}}})}),
+ place('./assets/models/ram.glb',-5.2,floorTop+.957,-5.935,0,1).then(o=>{car.visible=false;
+  // Low-poly game model: smooth the faceted panels, keep hard creases sharp.
+  o.traverse(c=>{if(c.isMesh)c.geometry=toCreasedNormals(c.geometry,Math.PI/5)})}), // Ricardo's orange RAM 1500
  place('./assets/models/sofa.glb',-6.55,floorTop,-19.8,-Math.PI/2,1.15), // faces the TV
  place('./assets/models/sofa.glb',-8.4,floorTop,-23.15,0,1.05),
  place('./assets/models/chair.glb',-8.45,floorTop,-16.9,Math.PI,1.25).then(o=>o.traverse(c=>{if(c.isMesh&&/fabric/i.test(c.material.name)){c.material.color.set('#8a5a3a');if(c.material.sheenColor)c.material.sheenColor.set('#c08a5a')}}))
@@ -516,7 +517,7 @@ if(inside){
  velocityZ+=(targetZ-velocityZ)*acceleration;
  const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
  const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-23.6,-1.6);
- const obstacles=[[-5.2,-5.8,1.75,2.75],[-6.55,-19.8,.85,1.85],[-8.4,-23.15,1.75,.85],[-8.55,-19.8,.6,.95],[-8.45,-16.9,.6,.55],[-10.3,-19.8,.6,1.7],[-3.4,-24.4,1.3,.5],[9.75,-9.9,.65,3.3],[10.4,-21.4,.75,3.6],[7.8,-24.4,2.6,.75],[8.5,-18.2,1.95,.6],[-10.1,-8,.9,7.5],[-10.25,-16.9,.55,.55]];
+ const obstacles=[[-5.2,-5.8,1.6,3.35],[-6.55,-19.8,.85,1.85],[-8.4,-23.15,1.75,.85],[-8.55,-19.8,.6,.95],[-8.45,-16.9,.6,.55],[-10.3,-19.8,.6,1.7],[-3.4,-24.4,1.3,.5],[9.75,-9.9,.65,3.3],[10.4,-21.4,.75,3.6],[7.8,-24.4,2.6,.75],[8.5,-18.2,1.95,.6],[-10.1,-8,.9,7.5],[-10.25,-16.9,.55,.55]];
  const blocked=(x,z)=>obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz);
  if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
  if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;

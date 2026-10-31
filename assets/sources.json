@@ -35,16 +35,16 @@
     "license": "CC0-1.0"
   },
   {
-    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
-    "file": "models/car.glb",
-    "license": "CC-BY-4.0",
-    "credit": "© 2024 Darmstadt Graphics Group GmbH, based on CC0 model by Unity Fan; compressed (meshopt, WebP)"
-  },
-  {
     "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenWoodLeatherSofa",
     "file": "models/sofa.glb",
     "license": "CC-BY-4.0",
     "credit": "© 2024 Darmstadt Graphics Group GmbH; compressed (meshopt, WebP)"
+  },
+  {
+    "source": "https://sketchfab.com/3d-models/2010-ram-1500-ram-racing-605f2d9a72554482bba6f6d8a80cf894",
+    "file": "models/ram.glb",
+    "license": "CC-BY-4.0",
+    "credit": "\"2010 Ram 1500 (Ram Racing)\" by maregajavier; repainted orange, converted to metal-roughness, compressed"
   },
   {
     "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair",
