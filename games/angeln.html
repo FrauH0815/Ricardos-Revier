@@ -1,0 +1,236 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Angeln · Ricardos Revier</title>
+<link rel="stylesheet" href="games.css">
+</head><body>
+<div id="hud">
+ <a class="back" href="../index.html">‹</a>
+ <div class="pill" id="levelInfo">Angeln</div>
+ <div class="pill small" id="goalInfo"></div>
+</div>
+<div id="msg"></div>
+<div id="fight" class="hidden">
+ <div class="meter"><span>Spannung</span><div class="bar"><i id="tension"></i></div></div>
+ <div class="meter"><span>Entfernung</span><b id="dist">0 m</b></div>
+</div>
+<div id="hint"></div>
+<div id="target" class="hidden"><div class="ring"></div><div class="core"></div></div>
+<div id="card" class="overlay bottom hidden"><div class="panel"><h2 id="cardTitle"></h2><p id="cardText"></p><div class="row"><button id="cardBtn">Weiter</button></div></div></div>
+<div id="menu" class="overlay"><div class="panel">
+ <h1>Angeln</h1><p class="sub">Wisch nach oben, um auszuwerfen. Beißt einer an, tipp schnell auf den Kreis. Beim Drill tippst du die hellen Kreise an, die roten lässt du in Ruhe, sonst reißt die Schnur.</p>
+ <div id="levels" class="levels"></div>
+</div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { Water } from 'three/addons/objects/Water.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { Sfx, trophy, progress, $ } from './shared.js';
+
+// ---------- Levels and fish ----------
+const SPECIES={
+ barsch:{name:'Barsch',min:.2,max:1.6,color:0x9aa35a,stripes:true,pull:.55,escape:.010,len:.36},
+ rotauge:{name:'Rotauge',min:.1,max:.8,color:0xc9c4b0,pull:.4,escape:.008,len:.32},
+ karpfen:{name:'Karpfen',min:2,max:14,color:0xb08a3e,pull:.8,escape:.012,len:.62},
+ zander:{name:'Zander',min:1,max:7,color:0x8c9282,pull:.7,escape:.016,len:.62},
+ hecht:{name:'Hecht',min:2,max:12,color:0x6f7a3c,pull:.95,escape:.02,len:.8},
+ wels:{name:'Wels',min:12,max:45,color:0x403a33,pull:1.25,escape:.026,len:1.3}
+};
+const LEVELS=[
+ {id:'teich',name:'Dorfteich',sun:[24,125],water:0x163428,fog:0xa9bcc4,fish:[['rotauge',5],['barsch',4],['karpfen',2]],biteMin:3,biteMax:8,window:1.25,goal:{type:'count',n:3,text:'Fang 3 Fische'}},
+ {id:'see',name:'Großer See',sun:[14,230],water:0x12303d,fog:0x9fb2c0,fish:[['barsch',3],['zander',3],['hecht',3],['karpfen',2]],biteMin:4,biteMax:10,window:1.0,goal:{type:'kg',n:12,text:'Fang zusammen 12 kg'}},
+ {id:'fluss',name:'Fluss am Abend',sun:[6,195],water:0x1c2a2a,fog:0xb98e72,fish:[['zander',3],['hecht',4],['wels',2]],biteMin:4,biteMax:11,window:.85,goal:{type:'species',n:'wels',text:'Fang den Wels'}}
+];
+let level=LEVELS[0],caught=[],state='menu';
+
+// ---------- Renderer, sky, water ----------
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.55;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.05,4000);camera.position.set(0,1.62,0);camera.rotation.order='YXZ';camera.rotation.x=-.1;scene.add(camera);
+const sky=new Sky();sky.scale.setScalar(10000);scene.add(sky);
+const su=sky.material.uniforms;su.turbidity.value=2.2;su.rayleigh.value=2;su.mieCoefficient.value=.003;su.mieDirectionalG.value=.82;
+const sun=new THREE.Vector3();
+const sunLight=new THREE.DirectionalLight(0xfff1dd,2.2);sunLight.castShadow=true;sunLight.shadow.mapSize.set(1024,1024);Object.assign(sunLight.shadow.camera,{left:-6,right:6,top:6,bottom:-6});scene.add(sunLight,sunLight.target);
+const hemi=new THREE.HemisphereLight(0xcfe3ff,0x3a3020,.6);scene.add(hemi);
+const waterNormals=new THREE.TextureLoader().load('../assets/games/waternormals.jpg',t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping});
+const water=new Water(new THREE.PlaneGeometry(3000,3000),{textureWidth:512,textureHeight:512,waterNormals,sunDirection:new THREE.Vector3(),sunColor:0xffffff,waterColor:0x1d3b2c,distortionScale:3.2,fog:true});
+water.rotation.x=-Math.PI/2;scene.add(water);
+const pmrem=new THREE.PMREMGenerator(renderer);let envRT=null;
+
+// Shoreline: painted forest silhouettes on a far ring, softened by fog.
+function treeline(seed,dark,light,height){
+ const c=document.createElement('canvas');c.width=4096;c.height=512;const g=c.getContext('2d');
+ let v=seed;const r=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ const grad=g.createLinearGradient(0,0,0,512);grad.addColorStop(0,light);grad.addColorStop(1,dark);g.fillStyle=grad;
+ g.beginPath();g.moveTo(0,512);
+ for(let x=0;x<=4096;x+=6){const hill=Math.sin(x/700+seed)*40+Math.sin(x/230)*18;g.lineTo(x,330-hill)}
+ g.lineTo(4096,512);g.fill();
+ for(let i=0;i<1700;i++){const x=r()*4096,base=330-(Math.sin(x/700+seed)*40+Math.sin(x/230)*18)+8,h=80+r()*height,w=h*(.28+r()*.18);
+  g.beginPath();
+  if(r()<.6){g.moveTo(x-w/2,base);for(let k=0;k<6;k++){const yy=base-h*(k+1)/6,ww=w*(1-k/6)*.55;g.lineTo(x-ww,yy+h/12);g.lineTo(x-ww*.4,yy)}g.lineTo(x,base-h);for(let k=5;k>=0;k--){const yy=base-h*(k+1)/6,ww=w*(1-k/6)*.55;g.lineTo(x+ww*.4,yy);g.lineTo(x+ww,yy+h/12)}g.lineTo(x+w/2,base)}
+  else{for(let k=0;k<5;k++){g.moveTo(x,base-h*.6);g.ellipse(x+(r()-.5)*w*.6,base-h*.45-r()*h*.35,w*.45,h*.28,0,0,7)}}
+  g.fill()}
+ // darker water line
+ g.fillStyle='rgba(10,14,10,.5)';g.fillRect(0,330+20,4096,200);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=THREE.RepeatWrapping;return t;
+}
+const shores=[];
+for(const [rad,seed,dark,light,h] of [[380,3,'#0f160d','#2e3b26',150],[230,7,'#0b120a','#223020',190]]){
+ const m=new THREE.MeshBasicMaterial({map:treeline(seed,dark,light,h),transparent:true,fog:true,side:THREE.BackSide,depthWrite:false});
+ const ring=new THREE.Mesh(new THREE.CylinderGeometry(rad,rad,rad*.12,96,1,true),m);ring.position.y=rad*.045;scene.add(ring);shores.push(ring);
+}
+// Reeds near the dock: thin swaying blades.
+const reeds=new THREE.Group();scene.add(reeds);
+{const geo=new THREE.ConeGeometry(.012,1,3,1);geo.translate(0,.5,0);const mat=new THREE.MeshStandardMaterial({color:0x6b7a3a,roughness:.9});
+ const inst=new THREE.InstancedMesh(geo,mat,420);const d=new THREE.Object3D();let v=11;const r=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ for(let i=0;i<420;i++){const side=i%2?1:-1;d.position.set(side*(2.2+r()*5),-.1,-1-r()*7);d.rotation.set((r()-.5)*.3,r()*6,(r()-.5)*.3);d.scale.set(1,.9+r()*1.4,1);d.updateMatrix();inst.setMatrixAt(i,d.matrix)}
+ reeds.add(inst);}
+
+// Wooden dock in the foreground.
+function woodTexture(){const c=document.createElement('canvas');c.width=256;c.height=1024;const g=c.getContext('2d');g.fillStyle='#6b5137';g.fillRect(0,0,256,1024);
+ let v=5;const r=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ for(let i=0;i<220;i++){g.strokeStyle=`rgba(${r()>.5?'40,28,18':'150,120,90'},${.08+r()*.12})`;g.lineWidth=1+r()*3;g.beginPath();const x=r()*256;g.moveTo(x,0);for(let y=0;y<1024;y+=40)g.lineTo(x+Math.sin(y/90+i)*6,y);g.stroke()}
+ for(let i=0;i<6;i++){g.fillStyle='rgba(40,25,15,.4)';g.beginPath();g.ellipse(r()*256,r()*1024,6,14,0,0,7);g.fill()}
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+const plankMat=new THREE.MeshStandardMaterial({map:woodTexture(),roughness:.85});
+for(let i=-4;i<=4;i++){const p=new THREE.Mesh(new THREE.BoxGeometry(.19,.05,5),plankMat);p.position.set(i*.205,.45,.4);p.rotation.z=(Math.random()-.5)*.02;p.receiveShadow=true;scene.add(p)}
+for(const x of [-.85,.85])for(const z of [-1.9,.6]){const post=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,2,10),new THREE.MeshStandardMaterial({color:0x3d2e20,roughness:.95}));post.position.set(x,-.3,z);scene.add(post)}
+
+// ---------- Rod, line, bobber ----------
+const rodGroup=new THREE.Group();camera.add(rodGroup);
+const rodMat=new THREE.MeshStandardMaterial({color:0x1e2326,roughness:.35,metalness:.4});
+const corkMat=new THREE.MeshStandardMaterial({color:0xa8865a,roughness:.9});
+const SEG=22,rodSegs=[];
+for(let i=0;i<SEG;i++){const r0=.016*(1-i/SEG)+.003,m=new THREE.Mesh(new THREE.CylinderGeometry(r0*.92,r0,1,8),i<4?corkMat:rodMat);rodGroup.add(m);rodSegs.push(m)}
+const reel=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.05,24),new THREE.MeshStandardMaterial({color:0x8d9295,metalness:.9,roughness:.25}));reel.rotation.z=Math.PI/2;rodGroup.add(reel);
+const rodBase=new THREE.Vector3(.2,-.6,-.42);
+let rodBend=0,rodSwing=0;const rodTipWorld=new THREE.Vector3();
+function updateRod(){
+ const tip=new THREE.Vector3(.3-rodBend*.15+rodSwing*.05,.42-rodBend*.45-rodSwing*.3,-2.35+rodSwing*1.2);
+ const mid=new THREE.Vector3().lerpVectors(rodBase,tip,.5);mid.y+=.12-rodBend*.05;
+ const curve=new THREE.QuadraticBezierCurve3(rodBase,mid,tip);
+ for(let i=0;i<SEG;i++){const a=curve.getPoint(i/SEG),b=curve.getPoint((i+1)/SEG),m=rodSegs[i];m.position.copy(a).add(b).multiplyScalar(.5);m.scale.set(1,a.distanceTo(b),1);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize())}
+ reel.position.copy(curve.getPoint(.17)).add(new THREE.Vector3(0,-.06,0));
+ camera.updateMatrixWorld();rodTipWorld.copy(tip).applyMatrix4(camera.matrixWorld);
+}
+const bobber=new THREE.Group();scene.add(bobber);
+{const pts=[];for(let i=0;i<=16;i++){const t=i/16;pts.push(new THREE.Vector2(Math.sin(t*Math.PI)*.04*(t<.5?1:.8),t*.1-.04))}
+ const top=new THREE.Mesh(new THREE.LatheGeometry(pts.slice(8),20),new THREE.MeshStandardMaterial({color:0xe02020,roughness:.35}));
+ const bot=new THREE.Mesh(new THREE.LatheGeometry(pts.slice(0,9),20),new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:.4}));
+ const stick=new THREE.Mesh(new THREE.CylinderGeometry(.004,.004,.12,6),new THREE.MeshStandardMaterial({color:0xffd200,emissive:0x442200}));stick.position.y=.09;
+ bobber.add(top,bot,stick);bobber.scale.setScalar(1.6);bobber.visible=false;}
+const LINE_N=40;const lineGeo=new THREE.BufferGeometry();lineGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(LINE_N*3),3));
+const line=new THREE.Line(lineGeo,new THREE.LineBasicMaterial({color:0xe8e8e0,transparent:true,opacity:.75}));line.frustumCulled=false;scene.add(line);
+function updateLine(sag){const p=lineGeo.attributes.position;const a=rodTipWorld,b=bobber.position;
+ for(let i=0;i<LINE_N;i++){const t=i/(LINE_N-1);p.setXYZ(i,a.x+(b.x-a.x)*t,a.y+(b.y+.1-a.y)*t-Math.sin(t*Math.PI)*sag,a.z+(b.z-a.z)*t)}p.needsUpdate=true}
+
+// Splash rings
+const rings=[];const ringMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.6,depthWrite:false});
+function splash(pos,big=1){for(let k=0;k<(big>1?3:2);k++){const r=new THREE.Mesh(new THREE.RingGeometry(.9,1,40),ringMat.clone());r.rotation.x=-Math.PI/2;r.position.set(pos.x,.02,pos.z);r.scale.setScalar(.05);r.userData={age:-k*.25,big};scene.add(r);rings.push(r)}}
+const drops=[];function spray(pos,n=14){for(let i=0;i<n;i++){const d=new THREE.Mesh(new THREE.SphereGeometry(.012,5,4),new THREE.MeshBasicMaterial({color:0xdfeef5,transparent:true,opacity:.85}));d.position.copy(pos);d.userData.v=new THREE.Vector3((Math.random()-.5)*1.2,1+Math.random()*1.6,(Math.random()-.5)*1.2);scene.add(d);drops.push(d)}}
+
+// ---------- Fish model ----------
+let fishProto=null;new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).load('../assets/games/fish.glb',g=>{fishProto=g.scene});
+const showFish=new THREE.Group();camera.add(showFish);showFish.position.set(0,-.05,-1.15);
+const showLight=new THREE.PointLight(0xffffff,3,4);showLight.position.set(.4,.5,-.4);camera.add(showLight);showLight.visible=false;
+function presentFish(sp,kg){showFish.clear();if(!fishProto)return;const f=fishProto.clone(true);
+ const len=sp.len*Math.cbrt(kg/((sp.min+sp.max)/2))*1.0;const s=Math.min(len,1.1)/.64;f.scale.setScalar(s);
+ f.traverse(c=>{if(c.isMesh){c.material=c.material.clone();c.material.color.lerp(new THREE.Color(sp.color),.55)}});
+ f.rotation.set(0,Math.PI/2,0);f.position.y=-.14*s;showFish.add(f);showLight.visible=true}
+
+// ---------- Game state ----------
+const sfx=new Sfx();
+let castT=0,castFrom=new THREE.Vector3(),castTo=new THREE.Vector3(),waitT=0,biteAt=0,nibbleAt=0,dist=0,tension=0,fish=null,fishKg=0,surge=0,surgeT=0,missStreak=0,lastReel=0,swipe=null,bobDip=0,lateral=0;
+const msg=$('#msg'),hint=$('#hint'),target=$('#target');
+function say(t,ms=1800){msg.textContent=t;msg.classList.add('show');clearTimeout(say.t);if(ms)say.t=setTimeout(()=>msg.classList.remove('show'),ms)}
+function setHint(t){hint.textContent=t}
+function goalText(){const g=level.goal;let p='';if(g.type==='count')p=` (${caught.length}/${g.n})`;if(g.type==='kg')p=` (${caught.reduce((a,c)=>a+c.kg,0).toFixed(1)}/${g.n} kg)`;$('#goalInfo').textContent=g.text+p}
+function pickFish(){const tot=level.fish.reduce((a,f)=>a+f[1],0);let r=Math.random()*tot;for(const [id,w] of level.fish){if((r-=w)<0)return SPECIES[id]}return SPECIES[level.fish[0][0]]}
+function startLevel(i){level=LEVELS[i];caught=[];$('#menu').classList.add('hidden');$('#levelInfo').textContent=level.name;goalText();
+ const [elev,az]=level.sun;sun.setFromSphericalCoords(1,THREE.MathUtils.degToRad(90-elev),THREE.MathUtils.degToRad(az));
+ su.sunPosition.value.copy(sun);water.material.uniforms.sunDirection.value.copy(sun).normalize();water.material.uniforms.waterColor.value.set(level.water);
+ sunLight.position.copy(sun).multiplyScalar(30);sunLight.color.set(elev<7?0xffb27a:0xfff1dd);sunLight.intensity=elev<7?1.4:2.4;
+ scene.fog=new THREE.FogExp2(level.fog,.0011);renderer.toneMappingExposure=elev<7?.5:.55;
+ if(envRT)envRT.dispose();const tmp=new THREE.Scene();tmp.add(sky);envRT=pmrem.fromScene(tmp);scene.add(sky);scene.environment=envRT.texture;
+ ready()}
+function ready(){state='ready';bobber.visible=false;line.visible=false;rodBend=0;showFish.clear();showLight.visible=false;setHint('Nach oben wischen zum Auswerfen');hideTarget()}
+
+// Cast: swipe up. Speed sets distance, sideways angle sets direction.
+renderer.domElement.addEventListener('pointerdown',e=>{sfx.unlock();if(state==='ready')swipe={x:e.clientX,y:e.clientY,t:performance.now()};
+ else if(state==='waiting'||state==='nibble')swipe={x:e.clientX,y:e.clientY,t:performance.now(),reel:true}});
+renderer.domElement.addEventListener('pointerup',e=>{if(!swipe)return;const dy=swipe.y-e.clientY,dx=e.clientX-swipe.x,dt=Math.max(60,performance.now()-swipe.t);
+ if(swipe.reel&&dy<-60){say('Eingeholt');ready()}
+ else if(state==='ready'&&dy>50){const speed=dy/dt;const power=THREE.MathUtils.clamp(.25+speed*.45,.25,1);const ang=THREE.MathUtils.clamp(Math.atan2(dx,dy),-.5,.5)+camera.rotation.y;
+  const d=6+power*26;castFrom.copy(rodTipWorld);castTo.set(-Math.sin(ang)*d,0,-Math.cos(ang)*d);castT=0;state='flying';rodSwing=1;bobber.visible=true;line.visible=true;sfx.whoosh();setHint('')}
+ swipe=null});
+
+// Tap targets: a shrinking ring you must hit before it closes.
+let targetDeadline=0,targetBad=false,targetLife=1;
+function showTarget(bad,life){targetBad=bad;targetLife=life;const m=70;const x=m+Math.random()*(innerWidth-2*m),y=innerHeight*.28+Math.random()*innerHeight*.45;
+ target.style.left=x+'px';target.style.top=y+'px';target.classList.remove('hidden','bad');if(bad)target.classList.add('bad');
+ const ring=target.querySelector('.ring');ring.style.animation='none';ring.offsetHeight;ring.style.animation=`shrink ${life}s linear forwards`;targetDeadline=time+life}
+function hideTarget(){target.classList.add('hidden');targetDeadline=0}
+target.addEventListener('pointerdown',e=>{e.stopPropagation();sfx.unlock();if(!targetDeadline)return;
+ if(state==='bite'){hideTarget();hook()}
+ else if(state==='fight'){
+  if(targetBad){tension+=.38;sfx.creak();say('Nicht ziehen, wenn er flüchtet!',900);hideTarget();setTimeout(()=>state==='fight'&&nextFightTarget(),250)}
+  else{dist=Math.max(0,dist-(.8+Math.random()*.8)/(fish.pull*.6+.5));tension+=.07*fish.pull;missStreak=0;sfx.reel();rodBend=Math.min(1,rodBend+.15);hideTarget();setTimeout(()=>state==='fight'&&nextFightTarget(),120)}}});
+function hook(){fish=pickFish();fishKg=+(fish.min+Math.pow(Math.random(),1.8)*(fish.max-fish.min)).toFixed(2);state='fight';tension=.25;surge=0;surgeT=1.5+Math.random()*2;missStreak=0;
+ dist=bobber.position.distanceTo(new THREE.Vector3(0,0,0));$('#fight').classList.remove('hidden');say('Angehauen!',900);setHint('Helle Kreise antippen · rote Kreise in Ruhe lassen');sfx.bite();navigator.vibrate?.([60,40,60]);spray(bobber.position,20);nextFightTarget()}
+function nextFightTarget(){const life=Math.max(.55,(1.25-fish.pull*.25)*(level.window/1.1));showTarget(surge>0,surge>0?Math.min(surge,1.2):life)}
+function lose(text){state='lost';setHint('');hideTarget();$('#fight').classList.add('hidden');say(text,2200);rodBend=0;sfx.snap();setTimeout(ready,2200)}
+function land(){state='landed';setHint('');hideTarget();$('#fight').classList.add('hidden');bobber.visible=false;line.visible=false;rodBend=0;
+ caught.push({sp:fish.name,kg:fishKg});presentFish(fish,fishKg);sfx.win();
+ const best=progress.get('angeln_best_kg',0);if(fishKg>best)progress.set('angeln_best_kg',fishKg);
+ if(fishKg>=10)trophy('angeln','dicker-brocken','Dicker Brocken: über 10 kg');
+ if(fish.name==='Hecht')trophy('angeln','hecht','Hecht gefangen');
+ $('#cardTitle').textContent=`${fish.name} · ${fishKg.toLocaleString('de-DE')} kg`;$('#cardText').textContent=fishKg>=10?'Was für ein Brocken!':fishKg<.5?'Klein, aber gefangen.':'Schöner Fang.';
+ const g=level.goal,total=caught.reduce((a,c)=>a+c.kg,0);
+ const done=(g.type==='count'&&caught.length>=g.n)||(g.type==='kg'&&total>=g.n)||(g.type==='species'&&fish.name===SPECIES[g.n].name);
+ goalText();
+ if(done){const idx=LEVELS.indexOf(level);progress.unlock('angeln',idx+1);trophy('angeln','level-'+level.id,`${level.name} geschafft`);
+  $('#cardText').textContent+=` Level geschafft!${idx<LEVELS.length-1?' Das nächste Gewässer ist frei.':' Du hast alle Gewässer gemeistert.'}`;$('#cardBtn').textContent='Zur Auswahl';$('#cardBtn').onclick=()=>{$('#card').classList.add('hidden');ready();openMenu()}}
+ else{$('#cardBtn').textContent='Weiter angeln';$('#cardBtn').onclick=()=>{$('#card').classList.add('hidden');ready()}}
+ setTimeout(()=>$('#card').classList.remove('hidden'),900)}
+
+function openMenu(){state='menu';const box=$('#levels');box.innerHTML='';const un=progress.unlocked('angeln');
+ LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.className='level'+(i>un?' locked':'');b.innerHTML=`<b>${i+1}. ${L.name}</b><small>${i>un?'🔒 Erst das vorige Level schaffen':L.goal.text}</small>`;if(i<=un)b.onclick=()=>startLevel(i);box.appendChild(b)});
+ $('#menu').classList.remove('hidden')}
+openMenu();
+
+// ---------- Loop ----------
+let last=performance.now(),time=0;
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
+ water.material.uniforms.time.value+=dt*.6;
+ reeds.children[0].rotation.z=Math.sin(time*.8)*.015;
+ rodSwing+=(0-rodSwing)*(1-Math.exp(-6*dt));
+ camera.rotation.y=Math.sin(time*.23)*.012;camera.rotation.x=-.1+Math.sin(time*.31)*.006;
+ const waveY=x=>Math.sin(time*1.7+x.x*.6)*.025+Math.sin(time*1.1+x.z*.4)*.02;
+ if(state==='flying'){castT+=dt/1.15;const t=Math.min(1,castT);bobber.position.lerpVectors(castFrom,castTo,t);bobber.position.y=THREE.MathUtils.lerp(castFrom.y,0,t)+Math.sin(t*Math.PI)*(4+castTo.length()*.25);
+  updateLine(.02);if(t>=1){state='waiting';splash(bobber.position,2);sfx.splash();waitT=0;biteAt=level.biteMin+Math.random()*(level.biteMax-level.biteMin);nibbleAt=1.5+Math.random()*2;setHint('Warten … (nach unten wischen zum Einholen)')}}
+ if(state==='waiting'||state==='nibble'||state==='bite'){waitT+=dt;bobDip*=Math.exp(-5*dt);
+  if(state==='waiting'&&waitT>nibbleAt&&waitT<biteAt-1){bobDip=.05;splash(bobber.position);nibbleAt=waitT+1.5+Math.random()*3}
+  if(state==='waiting'&&waitT>=biteAt){state='bite';bobDip=.25;splash(bobber.position,2);spray(bobber.position,10);sfx.bite();navigator.vibrate?.(120);rodBend=.35;say('Biss!',800);setHint('Schnell auf den Kreis tippen!');showTarget(false,level.window)}
+  if(state==='bite'){bobDip=.25+Math.sin(time*28)*.06;rodBend=.3+Math.sin(time*30)*.08;if(time>targetDeadline){hideTarget();say('Zu spät, er hat nur geknabbert.',1800);state='waiting';waitT=0;biteAt=level.biteMin+Math.random()*(level.biteMax-level.biteMin);rodBend=0}}
+  bobber.position.y=waveY(bobber.position)-bobDip;bobber.rotation.z=Math.sin(time*2)*.08;updateLine(.15+bobber.position.length()*.012)}
+ if(state==='fight'){
+  surgeT-=dt;
+  if(surge>0){surge-=dt;dist+=dt*(1.4*fish.pull);lateral+=dt*2.5*Math.sign(Math.sin(time*.7));tension+=dt*.05;if(Math.random()<dt*3)spray(bobber.position,6);if(surge<=0){surgeT=1.8+Math.random()*3;if(targetBad){hideTarget();nextFightTarget()}}}
+  else if(surgeT<=0&&dist>3){surge=.9+Math.random()*1.4*fish.pull;say('Er flüchtet! Nicht ziehen!',900);navigator.vibrate?.(200);sfx.creak();hideTarget();nextFightTarget()}
+  tension=Math.max(0,tension-dt*.12);
+  if(targetDeadline&&time>targetDeadline){hideTarget();if(!targetBad){missStreak++;tension-=.08;dist+=.4;if(missStreak>=2&&Math.random()<.45){lose(`Der ${fish.name} hat sich losgeschüttelt.`);}else nextFightTarget()}else nextFightTarget()}
+  // A fish can simply get away: more likely with slack line, and for strong fish.
+  const slack=tension<.15?2.5:1;if(state==='fight'&&Math.random()<dt*fish.escape*slack*10*(level.window<1?1.3:1)*.12)lose(`Weg ist er! Der ${fish.name} ist abgehauen.`);
+  if(tension>=1)lose('Schnur gerissen!');
+  if(state==='fight'){$('#tension').style.width=Math.min(100,tension*100)+'%';$('#tension').className=tension>.75?'hot':'';$('#dist').textContent=dist.toFixed(1)+' m';
+   const dir=bobber.position.clone().setY(0).normalize();const p=dir.multiplyScalar(Math.max(1.2,dist));p.x+=Math.sin(lateral)*Math.min(2.5,dist*.2);bobber.position.lerp(new THREE.Vector3(p.x,-.15+waveY(p),p.z),1-Math.exp(-4*dt));
+   rodBend=THREE.MathUtils.lerp(rodBend,.45+tension*.5+(surge>0?.2:0),1-Math.exp(-6*dt));updateLine(.02*(1-tension));if(dist<=1.3)land()}}
+ for(let i=rings.length-1;i>=0;i--){const r=rings[i];r.userData.age+=dt;const a=r.userData.age;if(a<0)continue;r.scale.setScalar(.05+a*(r.userData.big>1?1.4:.7));r.material.opacity=Math.max(0,.55-a*.45);if(a>1.3){scene.remove(r);rings.splice(i,1)}}
+ for(let i=drops.length-1;i>=0;i--){const d=drops[i];d.userData.v.y-=9.8*dt;d.position.addScaledVector(d.userData.v,dt);if(d.position.y<0){scene.remove(d);drops.splice(i,1)}}
+ if(showFish.children[0]){showFish.children[0].rotation.y+=dt*.7;showFish.position.y=-.05+Math.sin(time*2)*.01}
+ updateRod();renderer.render(scene,camera)}
+requestAnimationFrame(frame);
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+</script></body></html>

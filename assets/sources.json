@@ -57,5 +57,23 @@
     "file": "(loaded at runtime from dl.polyhaven.org)",
     "license": "CC0-1.0",
     "credit": "Poly Haven workshop props"
+  },
+  {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Fox",
+    "file": "games/fox.glb",
+    "license": "CC0-1.0 / CC-BY-4.0",
+    "credit": "Fox model: public domain (CC0); rigging/animation © 2014 tomkranis and © 2017 @AsoboStudio, @scurest (CC BY 4.0); compressed"
+  },
+  {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/BarramundiFish",
+    "file": "games/fish.glb",
+    "license": "CC0-1.0",
+    "credit": "Barramundi Fish, public domain; compressed"
+  },
+  {
+    "source": "https://github.com/mrdoob/three.js/blob/r170/examples/textures/waternormals.jpg",
+    "file": "games/waternormals.jpg",
+    "license": "MIT",
+    "credit": "three.js examples"
   }
 ]

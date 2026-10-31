@@ -1,0 +1,248 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Kegeln · Ricardos Revier</title>
+<link rel="stylesheet" href="games.css">
+<style>
+#score{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 104px);display:flex;justify-content:center;gap:3px;padding:0 8px;z-index:5;pointer-events:none}
+.fr{width:30px;background:#0d1418c8;border:1px solid #ffffff2a;border-radius:7px;font-size:10px;text-align:center;overflow:hidden;backdrop-filter:blur(6px)}
+.fr .r{display:flex;justify-content:flex-end;gap:1px;padding:2px 3px 0;min-height:13px;font-weight:800;color:#ffd58a}
+.fr .t{font-size:12px;font-weight:800;padding:1px 0 3px;min-height:18px}
+.fr.cur{border-color:#e6b780}
+#aimGuide{position:fixed;inset:0;pointer-events:none;z-index:3}
+</style></head><body>
+<div id="hud"><a class="back" href="../index.html">‹</a><div class="pill" id="levelInfo">Kegeln</div><div class="pill small" id="goalInfo"></div></div>
+<div id="score"></div>
+<canvas id="aimGuide"></canvas>
+<div id="msg"></div><div id="hint"></div>
+<div id="card" class="overlay hidden"><div class="panel"><h2 id="cardTitle"></h2><p id="cardText"></p><div class="row"><button id="cardBtn">Weiter</button></div></div></div>
+<div id="menu" class="overlay"><div class="panel">
+ <h1>Kegeln</h1><p class="sub">Finger unten auf die Kugel, dann Richtung Kegel wischen. Je schneller, desto kräftiger. Zieh beim Wischen einen Bogen, dann bekommt die Kugel Drall und läuft am Ende in die Kurve.</p>
+ <div id="levels" class="levels"></div>
+</div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","cannon-es":"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { Sfx, trophy, progress, $ } from './shared.js';
+
+const LANE_W=1.066,LANE_L=18.29,BALL_R=.109,HEAD_Z=-LANE_L;
+const LEVELS=[
+ {id:'uebung',name:'Übungsbahn',mode:'frames',frames:5,bumpers:true,goal:50,text:'5 Durchgänge mit Banden · 50 Punkte',oil:.04},
+ {id:'verein',name:'Vereinsabend',mode:'frames',frames:10,bumpers:false,goal:100,text:'Ganzes Spiel · 100 Punkte',oil:.05},
+ {id:'spares',name:'Spare-Challenge',mode:'spares',setups:[[10],[7],[3,6,10],[2,4,5,8],[1,2,4],[6,9,10]],goal:4,text:'Räum 4 von 6 Resten ab',bumpers:false,oil:.05},
+ {id:'meister',name:'Meisterschaft',mode:'frames',frames:10,bumpers:false,goal:150,text:'Ganzes Spiel · 150 Punkte',oil:.035}
+];
+let level=LEVELS[0];
+
+// ---------- Rendering ----------
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x07090c);scene.fog=new THREE.Fog(0x07090c,22,45);
+{const p=new THREE.PMREMGenerator(renderer);scene.environment=p.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.35}
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.03,80);
+
+// Lane surface: 39 maple boards, lane arrows and approach dots, under a high-gloss finish.
+function laneTexture(){const W=512,H=4096,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+ let v=17;const r=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ const bw=W/39;
+ for(let i=0;i<39;i++){const pine=i>=0&&H;const base=[200+r()*18,160+r()*16,112+r()*12];
+  for(let y=0;y<H;y+=256){const k=.92+r()*.12;g.fillStyle=`rgb(${base[0]*k|0},${base[1]*k|0},${base[2]*k|0})`;g.fillRect(i*bw,y,bw,256)}
+  for(let k=0;k<26;k++){g.strokeStyle=`rgba(120,80,40,${.05+r()*.08})`;g.lineWidth=.6+r();g.beginPath();const x=i*bw+r()*bw;g.moveTo(x,0);for(let y=0;y<H;y+=200)g.lineTo(x+Math.sin(y/300+k)*1.5,y);g.stroke()}
+  g.fillStyle='rgba(60,35,15,.35)';g.fillRect(i*bw,0,1,H)}
+ // Pine section near the pins is a touch lighter.
+ g.fillStyle='rgba(255,240,215,.07)';g.fillRect(0,0,W,H*.66);
+ const zToY=z=>H*(1-z/LANE_L);
+ // Arrows at about 4.6 m (15 ft), every fifth board.
+ for(let k=0;k<7;k++){const x=(5*k+4.5)*bw-(k>3?0:0),y=zToY(4.6+Math.abs(k-3)*.3);g.fillStyle='#3a1f12';g.beginPath();g.moveTo(x,y-46);g.lineTo(x-bw*.45,y+10);g.lineTo(x+bw*.45,y+10);g.closePath();g.fill()}
+ for(let k=0;k<7;k++){const x=(5*k+4.5)*bw;g.fillStyle='#3a1f12';g.beginPath();g.arc(x,zToY(2.2),4,0,7);g.fill()}
+ // Pin spots
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
+const laneTex=laneTexture();
+const laneMat=new THREE.MeshPhysicalMaterial({map:laneTex,roughness:.32,clearcoat:1,clearcoatRoughness:.04,envMapIntensity:.9});
+const gutterMat=new THREE.MeshStandardMaterial({color:0x1b1d20,roughness:.35,metalness:.6});
+const capMat=new THREE.MeshStandardMaterial({color:0x2a1d14,roughness:.5});
+const lanes=new THREE.Group();scene.add(lanes);
+function buildLane(x){const g=new THREE.Group();g.position.x=x;
+ const lane=new THREE.Mesh(new THREE.PlaneGeometry(LANE_W,LANE_L+1.2),laneMat);lane.rotation.x=-Math.PI/2;lane.position.set(0,0,-(LANE_L+1.2)/2+.6);lane.receiveShadow=true;g.add(lane);
+ for(const s of [-1,1]){const gut=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,LANE_L+1,20,1,true,Math.PI/2,Math.PI),gutterMat);gut.rotation.x=Math.PI/2;gut.rotation.z=0;gut.position.set(s*(LANE_W/2+.12),0,-LANE_L/2);gut.receiveShadow=true;g.add(gut);
+  const cap=new THREE.Mesh(new RoundedBoxGeometry(.12,.06,LANE_L+1,2,.02),capMat);cap.position.set(s*(LANE_W/2+.3),.02,-LANE_L/2);g.add(cap)}
+ // pin deck end, pit and masking unit
+ const pit=new THREE.Mesh(new THREE.BoxGeometry(LANE_W+.6,.6,1.2),new THREE.MeshStandardMaterial({color:0x050506,roughness:1}));pit.position.set(0,-.3,HEAD_Z-1.75);g.add(pit);
+ const curtain=new THREE.Mesh(new THREE.PlaneGeometry(LANE_W+.6,1.1),new THREE.MeshStandardMaterial({color:0x0b0b0f,roughness:1}));curtain.position.set(0,.55,HEAD_Z-2.2);g.add(curtain);
+ return g}
+for(const x of [-2.4,-1.2,0,1.2,2.4])lanes.add(buildLane(x*1.45));
+// Approach floor, side walls, ceiling
+const approach=new THREE.Mesh(new THREE.PlaneGeometry(12,6),new THREE.MeshPhysicalMaterial({map:laneTex,roughness:.4,clearcoat:.6,color:0xd9c7ad}));approach.rotation.x=-Math.PI/2;approach.position.set(0,-.002,3.6);scene.add(approach);
+const foul=new THREE.Mesh(new THREE.PlaneGeometry(12,.02),new THREE.MeshBasicMaterial({color:0x111111}));foul.rotation.x=-Math.PI/2;foul.position.set(0,.002,.6);scene.add(foul);
+// Masking unit with a glowing sign
+{const c=document.createElement('canvas');c.width=2048;c.height=256;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,2048,0);gr.addColorStop(0,'#13202e');gr.addColorStop(.5,'#2b1630');gr.addColorStop(1,'#13202e');g.fillStyle=gr;g.fillRect(0,0,2048,256);
+ g.font='900 120px system-ui,Arial';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#ffb86a';g.shadowBlur=40;g.fillStyle='#ffd9a8';g.fillText('RICARDOS REVIER',1024,132);
+ g.strokeStyle='#6fd0ff';g.lineWidth=6;g.shadowColor='#6fd0ff';g.strokeRect(30,30,1988,196);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;
+ const m=new THREE.Mesh(new THREE.PlaneGeometry(9,1.1),new THREE.MeshBasicMaterial({map:t,toneMapped:false}));m.position.set(0,1.75,HEAD_Z-1.3);scene.add(m);
+ const top=new THREE.Mesh(new THREE.BoxGeometry(9.2,.9,.8),new THREE.MeshStandardMaterial({color:0x101216,roughness:.7}));top.position.set(0,2.75,HEAD_Z-1.3);scene.add(top)}
+const ceiling=new THREE.Mesh(new THREE.PlaneGeometry(14,30),new THREE.MeshStandardMaterial({color:0x0c0e12,roughness:1}));ceiling.rotation.x=Math.PI/2;ceiling.position.set(0,3.4,-8);scene.add(ceiling);
+// Lights: soft overhead rows down the lanes, a bright pin deck, neon accents.
+scene.add(new THREE.HemisphereLight(0x8090b0,0x201a14,.35));
+for(let z=-1;z>-16;z-=3.5){const l=new THREE.SpotLight(0xfff2e0,22,9,.9,.7,1.6);l.position.set(0,3.3,z);l.target.position.set(0,0,z-.5);scene.add(l,l.target);
+ const strip=new THREE.Mesh(new THREE.BoxGeometry(6,.03,.12),new THREE.MeshBasicMaterial({color:0xfff4e6}));strip.position.set(0,3.36,z);scene.add(strip)}
+const deckLight=new THREE.SpotLight(0xffffff,90,8,.55,.5,1.5);deckLight.position.set(0,2.3,HEAD_Z+1.6);deckLight.target.position.set(0,0,HEAD_Z-.5);deckLight.castShadow=true;deckLight.shadow.mapSize.set(1024,1024);deckLight.shadow.bias=-.0004;scene.add(deckLight,deckLight.target);
+for(const s of [-1,1]){const neon=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,20),new THREE.MeshBasicMaterial({color:s<0?0x5fd3ff:0xff6fb5}));neon.position.set(s*6.2,.08,-8);scene.add(neon);const nl=new THREE.PointLight(s<0?0x5fd3ff:0xff6fb5,4,6,2);nl.position.set(s*6,.6,-6);scene.add(nl)}
+
+// ---------- Pins ----------
+const pinProfile=[[0,0],[.0258,0],[.04,.02],[.052,.045],[.0598,.08],[.0605,.095],[.058,.13],[.05,.17],[.038,.21],[.027,.245],[.0228,.26],[.025,.285],[.031,.31],[.0323,.335],[.03,.355],[.022,.372],[.01,.38],[0,.381]].map(([r,h])=>new THREE.Vector2(r,h));
+function pinTexture(){const c=document.createElement('canvas');c.width=64;c.height=512;const g=c.getContext('2d');g.fillStyle='#f6f3ec';g.fillRect(0,0,64,512);
+ // Lathe v runs along the profile length; stripes sit near the neck (~ 0.62–0.7 of the profile).
+ g.fillStyle='#c51d24';g.fillRect(0,512*(1-.705),64,512*.022);g.fillRect(0,512*(1-.655),64,512*.022);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+const pinGeo=new THREE.LatheGeometry(pinProfile,40);pinGeo.translate(0,-.15,0);
+const pinMat=new THREE.MeshPhysicalMaterial({map:pinTexture(),roughness:.25,clearcoat:1,clearcoatRoughness:.08});
+// Standard triangle: rows 12 in apart sideways, 10.39 in back.
+const PIN_POS=[];{const s=.3048,rz=.2639;let n=1;for(let row=0;row<4;row++)for(let k=0;k<=row;k++)PIN_POS[n++]=[(k-row/2)*s,HEAD_Z-row*rz]}
+// Neighbour lanes get static decorative pins.
+{const inst=new THREE.InstancedMesh(pinGeo,pinMat,40);const d=new THREE.Object3D();let i=0;for(const lx of [-2.4,-1.2,1.2,2.4])for(let p=1;p<=10;p++){d.position.set(lx*1.45+PIN_POS[p][0],.15,PIN_POS[p][1]);d.updateMatrix();inst.setMatrixAt(i++,d.matrix)}scene.add(inst)}
+
+// ---------- Physics ----------
+const world=new CANNON.World({gravity:new CANNON.Vec3(0,-9.82,0)});world.allowSleep=true;world.broadphase=new CANNON.SAPBroadphase(world);world.solver.iterations=14;
+const mLane=new CANNON.Material('lane'),mPin=new CANNON.Material('pin'),mBall=new CANNON.Material('ball');
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mLane,{friction:.04,restitution:.05}));
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mLane,{friction:.32,restitution:.15}));
+world.addContactMaterial(new CANNON.ContactMaterial(mPin,mPin,{friction:.18,restitution:.55}));
+world.addContactMaterial(new CANNON.ContactMaterial(mBall,mPin,{friction:.12,restitution:.45}));
+function staticBox(hx,hy,hz,x,y,z,mat=mLane){const b=new CANNON.Body({mass:0,material:mat});b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz)));b.position.set(x,y,z);world.addBody(b);return b}
+staticBox(LANE_W/2,.1,(LANE_L+2)/2,0,-.1,-(LANE_L+2)/2+1);   // lane
+staticBox(.2,.1,(LANE_L+1)/2,-(LANE_W/2+.2),-.2,-LANE_L/2);  // gutters (lower)
+staticBox(.2,.1,(LANE_L+1)/2,(LANE_W/2+.2),-.2,-LANE_L/2);
+staticBox(.05,.5,(LANE_L+3)/2,-(LANE_W/2+.42),.3,-LANE_L/2-.5);// side walls
+staticBox(.05,.5,(LANE_L+3)/2,(LANE_W/2+.42),.3,-LANE_L/2-.5);
+staticBox(1,.3,.1,0,.2,HEAD_Z-2.3);                             // back cushion
+staticBox(1,.1,1,0,-.75,HEAD_Z-1.7);                            // pit floor
+const bumpers=[];for(const s of [-1,1]){const b=staticBox(.03,.06,(LANE_L-.5)/2,s*(LANE_W/2+.03),.06,-LANE_L/2+.2);bumpers.push(b)}
+const bumperMeshes=bumpers.map(b=>{const m=new THREE.Mesh(new RoundedBoxGeometry(.06,.12,LANE_L-.5,2,.02),new THREE.MeshStandardMaterial({color:0xe2a34a,roughness:.5}));m.position.copy(b.position);scene.add(m);return m});
+function setBumpers(on){bumpers.forEach(b=>{on?world.addBody(b):world.removeBody(b)});bumperMeshes.forEach(m=>m.visible=on)}
+
+const pins=[];
+for(let n=1;n<=10;n++){const body=new CANNON.Body({mass:1.55,material:mPin,linearDamping:.05,angularDamping:.1,sleepSpeedLimit:.05,sleepTimeLimit:.5});
+ body.addShape(new CANNON.Cylinder(.052,.04,.17,12),new CANNON.Vec3(0,-.065,0));
+ body.addShape(new CANNON.Cylinder(.028,.052,.2,12),new CANNON.Vec3(0,.12,0));
+ const mesh=new THREE.Mesh(pinGeo,pinMat);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
+ pins[n]={n,body,mesh,standing:true,inPlay:true}}
+function placePins(list){for(let n=1;n<=10;n++){const p=pins[n];const on=list.includes(n);p.inPlay=on;p.standing=on;p.mesh.visible=on;
+  if(world.bodies.includes(p.body))world.removeBody(p.body);
+  if(on){p.body.position.set(PIN_POS[n][0],.15+.001,PIN_POS[n][1]);p.body.quaternion.set(0,0,0,1);p.body.velocity.setZero();p.body.angularVelocity.setZero();world.addBody(p.body);p.body.sleep()}}}
+
+// ---------- Ball ----------
+function ballTexture(){const c=document.createElement('canvas');c.width=1024;c.height=512;const g=c.getContext('2d');g.fillStyle='#4a1a0c';g.fillRect(0,0,1024,512);
+ let v=29;const r=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ for(let i=0;i<260;i++){g.strokeStyle=['rgba(230,110,30,','rgba(255,170,60,','rgba(30,10,5,','rgba(120,40,10,'][i%4]+(.25+r()*.4)+')';g.lineWidth=2+r()*14;g.beginPath();let x=r()*1024,y=r()*512;g.moveTo(x,y);for(let k=0;k<8;k++){x+=(r()-.5)*160;y+=(r()-.5)*90;g.quadraticCurveTo(x+(r()-.5)*80,y+(r()-.5)*80,x,y)}g.stroke()}
+ g.fillStyle='#0a0a0a';for(const [x,y,s] of [[480,230,22],[540,230,22],[510,300,26]]){g.beginPath();g.arc(x,y,s,0,7);g.fill()}
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+const ball=new THREE.Mesh(new THREE.SphereGeometry(BALL_R,48,32),new THREE.MeshPhysicalMaterial({map:ballTexture(),roughness:.15,clearcoat:1,clearcoatRoughness:.03}));ball.castShadow=true;scene.add(ball);
+const ballBody=new CANNON.Body({mass:6.8,material:mBall,shape:new CANNON.Sphere(BALL_R),linearDamping:.01,angularDamping:.02});
+
+// ---------- Game state & scoring ----------
+const sfx=new Sfx();
+let state='menu',frames=[],frameIdx=0,rollInFrame=0,standingBefore=[],throwT=0,hook=0,hookSide=0,settleT=0,camZ=3,spareResults=[];
+const msg=$('#msg');function say(t,ms=1600){msg.textContent=t;msg.classList.add('show');clearTimeout(say.t);if(ms)say.t=setTimeout(()=>msg.classList.remove('show'),ms)}
+function score(fr){let total=0,out=[];const rolls=fr.flatMap(f=>f.rolls);let i=0;
+ for(let f=0;f<fr.length;f++){const r=fr[f].rolls;if(!r.length){out.push(null);continue}
+  const isLast=f===fr.length-1;
+  if(!isLast&&r[0]===10){const a=rolls[i+1],b=rolls[i+2];if(a===undefined||b===undefined){out.push(null);i+=1;continue}total+=10+a+b;i+=1}
+  else if(!isLast&&r.length>=2&&r[0]+r[1]===10){const a=rolls[i+2];if(a===undefined){out.push(null);i+=2;continue}total+=10+a;i+=2}
+  else if(isLast){if((r[0]===10||r[0]+(r[1]||0)===10)&&r.length<3){out.push(null);i+=r.length;continue}if(r.length<2&&r[0]!==10){out.push(null);i+=r.length;continue}total+=r.reduce((a,b)=>a+b,0);i+=r.length}
+  else{if(r.length<2){out.push(null);i+=r.length;continue}total+=r[0]+r[1];i+=2}
+  out.push(total)}
+ return out}
+function marks(r,last){const s=[];for(let k=0;k<r.length;k++){const v=r[k],prev=r[k-1];
+  if(v===10&&(k===0||last&&(prev===10||(k===2&&r[0]+r[1]===10))))s.push('X');
+  else if(k>0&&prev!==10&&prev+v===10&&!(last&&k===2&&r[0]+r[1]!==10&&r[0]!==10))s.push('/');
+  else s.push(v===0?'–':v)}return s}
+function renderScore(){const box=$('#score');box.innerHTML='';
+ if(level.mode==='spares'){level.setups.forEach((s,i)=>{const d=document.createElement('div');d.className='fr'+(i===frameIdx?' cur':'');const res=spareResults[i];d.innerHTML=`<div class="r">${i+1}</div><div class="t">${res===undefined?'':res?'✓':'✗'}</div>`;box.appendChild(d)});return}
+ const sc=score(frames);frames.forEach((f,i)=>{const d=document.createElement('div');d.className='fr'+(i===frameIdx?' cur':'');d.innerHTML=`<div class="r">${marks(f.rolls,i===frames.length-1).join(' ')}</div><div class="t">${sc[i]??''}</div>`;box.appendChild(d)})}
+function total(){const s=score(frames).filter(x=>x!=null);return s.length?s[s.length-1]:0}
+
+function startLevel(i){level=LEVELS[i];$('#menu').classList.add('hidden');$('#levelInfo').textContent=level.name;$('#goalInfo').textContent=level.text;setBumpers(level.bumpers);
+ frameIdx=0;rollInFrame=0;spareResults=[];frames=level.mode==='frames'?Array.from({length:level.frames},()=>({rolls:[]})):[];
+ newRack();renderScore()}
+function newRack(){placePins(level.mode==='spares'?level.setups[frameIdx]:[1,2,3,4,5,6,7,8,9,10]);resetBall()}
+function resetBall(){if(world.bodies.includes(ballBody))world.removeBody(ballBody);ball.visible=true;ball.position.set(0,BALL_R,.25);ball.quaternion.identity();state='aim';camZ=3;
+ standingBefore=[];for(let n=1;n<=10;n++)if(pins[n].inPlay&&pins[n].standing)standingBefore.push(n);$('#hint').textContent='Kugel antippen und Richtung Kegel wischen'}
+
+// ---------- Throw input ----------
+const guide=$('#aimGuide'),gctx=guide.getContext('2d');function sizeGuide(){guide.width=innerWidth*devicePixelRatio;guide.height=innerHeight*devicePixelRatio}sizeGuide();
+let path=null;
+renderer.domElement.addEventListener('pointerdown',e=>{sfx.unlock();if(state!=='aim')return;path=[{x:e.clientX,y:e.clientY,t:performance.now()}]});
+renderer.domElement.addEventListener('pointermove',e=>{if(!path)return;path.push({x:e.clientX,y:e.clientY,t:performance.now()});drawGuide()});
+renderer.domElement.addEventListener('pointerup',e=>{if(!path)return;path.push({x:e.clientX,y:e.clientY,t:performance.now()});const p=path;path=null;gctx.clearRect(0,0,guide.width,guide.height);throwFromPath(p)});
+function drawGuide(){gctx.clearRect(0,0,guide.width,guide.height);gctx.save();gctx.scale(devicePixelRatio,devicePixelRatio);gctx.strokeStyle='rgba(255,215,150,.85)';gctx.lineWidth=5;gctx.lineCap='round';gctx.shadowColor='#ffb86a';gctx.shadowBlur=12;gctx.beginPath();path.forEach((q,i)=>i?gctx.lineTo(q.x,q.y):gctx.moveTo(q.x,q.y));gctx.stroke();gctx.restore()}
+function throwFromPath(p){const a=p[0],b=p[p.length-1];const dy=a.y-b.y;if(dy<60)return;
+ // Speed from the last part of the swipe; direction from start→end; hook from how far the middle bulges sideways.
+ const recent=p.filter(q=>q.t>b.t-140);const r0=recent[0]||a;const v=(r0.y-b.y)/Math.max(16,b.t-r0.t);
+ const speed=THREE.MathUtils.clamp(5.5+v*2.6,5.5,10.5);
+ const startX=THREE.MathUtils.clamp((a.x/innerWidth-.5)*LANE_W*1.1,-LANE_W/2+.15,LANE_W/2-.15);
+ const angle=THREE.MathUtils.clamp((b.x-a.x)/dy*.11,-.07,.07);
+ const mid=p[Math.floor(p.length/2)];const lineX=a.x+(b.x-a.x)*((a.y-mid.y)/dy);const bulge=(mid.x-lineX)/innerWidth;
+ hook=THREE.MathUtils.clamp(-bulge*9,-1,1);
+ ball.position.set(startX,BALL_R,.25);ballBody.position.set(startX,BALL_R+.005,.25);ballBody.velocity.set(Math.sin(angle)*speed,0,-Math.cos(angle)*speed);ballBody.angularVelocity.set(-speed/BALL_R,0,hook*20);ballBody.quaternion.set(0,0,0,1);ballBody.wakeUp();world.addBody(ballBody);
+ state='rolling';throwT=0;settleT=0;sfx.roll();$('#hint').textContent='';for(let n=1;n<=10;n++)if(pins[n].inPlay&&pins[n].standing)pins[n].body.wakeUp();
+}
+// Pins only wake when hit (sleeping), so racks never wobble on their own.
+let pinsHitSound=false;ballBody.addEventListener('collide',e=>{if(!pinsHitSound&&pins.some(p=>p&&p.body===e.body)){pinsHitSound=true;sfx.pins(10)}});
+
+function isDown(p){const up=new CANNON.Vec3(0,1,0);const q=p.body.quaternion.vmult(up);return q.y<.85||p.body.position.y<.05||Math.abs(p.body.position.x)>LANE_W/2+.05||p.body.position.z<HEAD_Z-1.1}
+function evaluate(){const downNow=[];for(const n of standingBefore){const p=pins[n];if(isDown(p)){downNow.push(n);p.standing=false}}
+ const k=downNow.length;sfx.pins(k);
+ if(level.mode==='spares'){const ok=k===standingBefore.length;spareResults[frameIdx]=ok;say(ok?'Abgeräumt!':`${standingBefore.length-k} bleiben stehen`);frameIdx++;renderScore();
+  if(frameIdx>=level.setups.length)return setTimeout(finish,1300);return setTimeout(newRack,1500)}
+ const f=frames[frameIdx];f.rolls.push(k);const last=frameIdx===frames.length-1;
+ if(rollInFrame===0&&k===10){say('STRIKE!',1500);trophy('kegeln','strike','Erster Strike');navigator.vibrate?.([80,40,80])}
+ else if(rollInFrame===1&&f.rolls[0]+k===10&&f.rolls[0]!==10){say('Spare!')}
+ else if(k===0)say(rollInFrame===0?'Rinne …':'Daneben');else say(`${k} Kegel`);
+ // Turkey: three strikes in a row
+ const all=frames.flatMap(x=>x.rolls);if(all.length>=3&&all.slice(-3).every(x=>x===10))trophy('kegeln','turkey','Turkey: drei Strikes am Stück');
+ renderScore();
+ let nextFrame=false,reset=false;
+ if(!last){if(k===10&&rollInFrame===0||rollInFrame===1)nextFrame=true;else rollInFrame=1}
+ else{const r=f.rolls;if(r.length===1)reset=r[0]===10;else if(r.length===2){if(r[0]===10)reset=r[1]===10||false;else if(r[0]+r[1]===10)reset=true;else return setTimeout(finish,1500)}else return setTimeout(finish,1500);
+  rollInFrame++;if(r.length===2&&r[0]===10&&r[1]!==10)reset=false}
+ setTimeout(()=>{if(nextFrame){frameIdx++;rollInFrame=0;renderScore();newRack()}else if(reset){newRack()}else{sweep();resetBall()}},1400)}
+function sweep(){for(let n=1;n<=10;n++){const p=pins[n];if(p.inPlay&&!p.standing){p.inPlay=false;p.mesh.visible=false;world.removeBody(p.body)}
+ else if(p.inPlay){p.body.position.set(PIN_POS[n][0],.151,PIN_POS[n][1]);p.body.quaternion.set(0,0,0,1);p.body.velocity.setZero();p.body.angularVelocity.setZero();p.body.sleep()}}}
+function finish(){const idx=LEVELS.indexOf(level);let ok,text;
+ if(level.mode==='spares'){const n=spareResults.filter(Boolean).length;ok=n>=level.goal;text=`${n} von ${level.setups.length} Resten abgeräumt.`}
+ else{const t=total();ok=t>=level.goal;text=`${t} Punkte.`;const best=progress.get('kegeln_best',0);if(t>best)progress.set('kegeln_best',t);if(t>=200)trophy('kegeln','200','200 Punkte in einem Spiel');if(level.frames===10&&frames.every(f=>f.rolls[0]===10))trophy('kegeln','perfekt','Das perfekte Spiel')}
+ if(ok){progress.unlock('kegeln',idx+1);trophy('kegeln','level-'+level.id,`${level.name} geschafft`);sfx.win()}
+ $('#cardTitle').textContent=ok?'Level geschafft!':'Knapp vorbei';$('#cardText').textContent=text+(ok?(idx<LEVELS.length-1?' Das nächste Level ist frei.':' Du bist Meister der Bahn.'):` Ziel: ${level.text}.`);
+ $('#cardBtn').textContent=ok?'Zur Auswahl':'Nochmal';$('#cardBtn').onclick=()=>{$('#card').classList.add('hidden');ok?openMenu():startLevel(idx)};$('#card').classList.remove('hidden')}
+function openMenu(){state='menu';const box=$('#levels');box.innerHTML='';const un=progress.unlocked('kegeln');
+ LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.className='level'+(i>un?' locked':'');b.innerHTML=`<b>${i+1}. ${L.name}</b><small>${i>un?'🔒 Erst das vorige Level schaffen':L.text}</small>`;if(i<=un)b.onclick=()=>startLevel(i);box.appendChild(b)});
+ const best=progress.get('kegeln_best',0);if(best){const s=document.createElement('p');s.className='sub';s.style.margin='12px 0 0';s.textContent=`Bestes Spiel: ${best} Punkte`;box.appendChild(s)}
+ $('#menu').classList.remove('hidden')}
+openMenu();placePins([1,2,3,4,5,6,7,8,9,10]);ball.position.set(0,BALL_R,.25);
+
+// ---------- Loop ----------
+let last=performance.now(),time=0;
+const camPos=new THREE.Vector3(0,1.55,3),camLook=new THREE.Vector3(0,.2,-10);
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
+ if(state==='rolling'||state==='settle'){
+  throwT+=dt;
+  // Oil runs out after ~2/3 of the lane: the ball grips and hooks.
+  const z=ballBody.position.z;if(z<-LANE_L*.55&&z>HEAD_Z+.3&&ballBody.position.y>0){ballBody.velocity.x+=hook*(1.25-level.oil*4)*dt*1.6}
+  if(ballBody.position.y<-.02&&Math.abs(ballBody.position.x)>LANE_W/2&&z>HEAD_Z+1){ballBody.velocity.x*=.9}
+  world.step(1/180,dt,12);
+  ball.position.copy(ballBody.position);ball.quaternion.copy(ballBody.quaternion);
+  if(state==='rolling'&&(z<HEAD_Z-1||ballBody.velocity.length()<.3&&throwT>1.5||throwT>7)){state='settle';settleT=0}
+  if(state==='settle'){settleT+=dt;const moving=pins.some(p=>p&&p.inPlay&&p.body.sleepState!==CANNON.Body.SLEEPING&&p.body.velocity.length()>.06);if(settleT>2.2&&!moving||settleT>4.5){state='scoring';ball.visible=false;pinsHitSound=false;evaluate()}}
+ }else if(state==='scoring'){world.step(1/180,dt,6)}
+ for(let n=1;n<=10;n++){const p=pins[n];if(p.inPlay){p.mesh.position.copy(p.body.position);p.mesh.quaternion.copy(p.body.quaternion)}}
+ // Camera: stands behind the ball, rides along, then watches the pins.
+ const follow=(state==='rolling'||state==='settle')?Math.max(HEAD_Z+4.5,ballBody.position.z+3.2):3;
+ camZ+=(follow-camZ)*(1-Math.exp(-3*dt));
+ camPos.set(0,THREE.MathUtils.lerp(1.3,1.0,THREE.MathUtils.clamp((3-camZ)/16,0,1)),camZ);
+ camera.position.copy(camPos);camera.lookAt(0,.15,Math.min(camZ-6,HEAD_Z+.2));
+ renderer.render(scene,camera)}
+requestAnimationFrame(frame);
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();sizeGuide()});
+</script></body></html>
