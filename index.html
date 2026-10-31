@@ -286,15 +286,32 @@ const btn=document.getElementById('door'),help=document.getElementById('help');
 function setGoal(value){goal=value;btn.textContent=value?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑';btn.setAttribute('aria-expanded',String(!!value))}
 btn.onclick=()=>setGoal(goal===0?1:0);
 help.textContent='Materialien werden geladen …';
-Promise.all([ready,workshopMaterials]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Tor hochziehen · Zum Umschauen seitlich wischen';window.garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
+Promise.all([ready,workshopMaterials]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Im Raum in alle Richtungen wischen · 360° umsehen';window.garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
+// Full 360-degree first-person looking, with vertical tilt. A vertical swipe
+// only controls the roller door while it is closed; once inside, all swipes look.
+let yaw=0,pitch=0,inside=false;
 renderer.domElement.addEventListener('pointerdown',e=>{touching=true;sx=e.clientX;sy=e.clientY;dragGate=false;renderer.domElement.setPointerCapture(e.pointerId)});
-renderer.domElement.addEventListener('pointermove',e=>{if(!touching)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dy)>Math.abs(dx)*1.4&&Math.abs(dy)>2&&e.clientX>innerWidth*.25&&e.clientX<innerWidth*.75)dragGate=true;if(dragGate){amount=THREE.MathUtils.clamp(amount-dy/innerHeight*1.7,0,1);goal=amount}else{orbitX=THREE.MathUtils.clamp(orbitX+dx*.0014,-.27,.27);orbitY=THREE.MathUtils.clamp(orbitY+dy*.001,-.1,.13)}sx=e.clientX;sy=e.clientY});
+renderer.domElement.addEventListener('pointermove',e=>{
+ if(!touching)return;
+ const dx=e.clientX-sx,dy=e.clientY-sy;
+ if(!inside&&amount<.6&&Math.abs(dy)>Math.abs(dx)*1.4&&Math.abs(dy)>2&&e.clientX>innerWidth*.25&&e.clientX<innerWidth*.75)dragGate=true;
+ if(dragGate){amount=THREE.MathUtils.clamp(amount-dy/innerHeight*1.7,0,1);goal=amount}
+ else {yaw-=dx*.006;pitch=THREE.MathUtils.clamp(pitch-dy*.0045,-1.25,1.25)}
+ sx=e.clientX;sy=e.clientY;
+});
 function release(){if(dragGate)setGoal(amount>.4?1:0);touching=false;dragGate=false}
-renderer.domElement.addEventListener('pointerup',release);renderer.domElement.addEventListener('pointercancel',release);
+renderer.domElement.addEventListener('pointerup',release);
+renderer.domElement.addEventListener('pointercancel',release);
 function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
 function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-last)/1000,.05);last=now;if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
  slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
  bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
- document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);camera.position.set(orbitX*12*(1-entry*.65),THREE.MathUtils.lerp(4.1,1.78,entry)+orbitY*3,THREE.MathUtils.lerp(distance,-3.1,entry));camera.fov=THREE.MathUtils.lerp(innerWidth<innerHeight?53:43,innerWidth<innerHeight?72:65,entry);camera.updateProjectionMatrix();camera.lookAt(0,THREE.MathUtils.lerp(2.8,1.85,entry),THREE.MathUtils.lerp(0,-16,entry));renderer.render(scene,camera)
+ document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);inside=entry>.85;
+camera.position.set(0,THREE.MathUtils.lerp(4.1,1.78,entry),THREE.MathUtils.lerp(distance,-3.1,entry));
+camera.fov=THREE.MathUtils.lerp(innerWidth<innerHeight?53:43,innerWidth<innerHeight?72:65,entry);camera.updateProjectionMatrix();
+const baseYaw=Math.PI; // face into the workshop on entering
+const viewYaw=baseYaw+yaw,viewPitch=pitch;
+const lookDirection=new THREE.Vector3(Math.sin(viewYaw)*Math.cos(viewPitch),Math.sin(viewPitch),Math.cos(viewYaw)*Math.cos(viewPitch));
+camera.lookAt(camera.position.clone().add(lookDirection));renderer.render(scene,camera)
 }requestAnimationFrame(animate);
 </script></body></html>
