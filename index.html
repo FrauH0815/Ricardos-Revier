@@ -53,8 +53,8 @@ for(const x of [-3.2,3.2]){
 // schmale horizontale Torprofile und sichtbare Unterkante
 
 const interior=new THREE.Group();scene.add(interior);
-const floor=mat('#77736e',.98,.02);floor.map=texture('#898680',16);floor.map.repeat.set(5,7);floor.bumpMap=floor.map;floor.bumpScale=.065;
-const brick=mat('#b1b0ab',.96,.02);brick.map=texture('#b8b8b3',21);brick.map.repeat.set(4,3);brick.bumpMap=brick.map;brick.bumpScale=.028;
+const floor=mat('#c1beb8',.96,.02);
+const brick=mat('#d8d8d5',.97,.01);
 box(22,.2,25,0,.08,-12.4,floor,interior);box(22,7.3,.18,0,3.75,-24.9,brick,interior);
 box(.18,7.3,25,-10.95,3.75,-12.4,brick,interior);box(.18,7.3,25,10.95,3.75,-12.4,brick,interior);
 box(22,.18,25,0,7.44,-12.4,mat('#999b99',.95),interior);
@@ -190,6 +190,21 @@ for(const y of [2.1,4.5,7,9.25]){box(16,.024,.025,0,y,-.4,mat('#858780'))}
 for(const x of [-5.55,5.55]){box(.5,.25,.4,x,6.3,.12,edge);const lamp=box(.32,.08,.28,x,6.15,.4,warm);const p=new THREE.PointLight(0xffb66c,22,9,2);p.position.set(x,6,.9);scene.add(p)}
 const mainLamp=new THREE.PointLight(0xffd39a,15,11,2);mainLamp.position.set(0,5.7,-1.4);scene.add(mainLamp);const outdoor=new THREE.DirectionalLight(0x9eb6d7,1.45);outdoor.position.set(-5,11,9);outdoor.intensity=.65;outdoor.castShadow=true;outdoor.shadow.mapSize.set(2048,2048);Object.assign(outdoor.shadow.camera,{left:-17,right:17,top:15,bottom:-15,near:.5,far:50});outdoor.shadow.bias=-.0003;outdoor.shadow.normalBias=.03;outdoor.shadow.camera.updateProjectionMatrix();scene.add(outdoor);scene.add(new THREE.HemisphereLight(0x8ca2c2,0x34291f,.28));
 box(15,.15,2.7,0,-.015,3.2,concrete);for(let i=-8;i<=8;i++){box(.015,.014,2.7,i*.9,.07,3.2,mat('#41413f'))}
+// Photographic PBR scans for the floor and workshop walls (Poly Haven CC0).
+// Use independently tiled UVs, not the placeholder canvas noise.
+async function applyWorkshopPBR(material,base,repeatX,repeatY,tint){
+ const texLoader=new THREE.TextureLoader();
+ const files=['_diff_1k.jpg','_nor_gl_1k.jpg','_rough_1k.jpg'];
+ const maps=await Promise.all(files.map(suffix=>texLoader.loadAsync('https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/'+base+'/'+base+suffix)));
+ maps.forEach(t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeatX,repeatY);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy())});
+ maps[0].colorSpace=THREE.SRGBColorSpace;
+ material.map=maps[0];material.normalMap=maps[1];material.roughnessMap=maps[2];
+ material.normalScale.set(.65,.65);material.color.set(tint);material.roughness=1;material.needsUpdate=true;
+}
+const workshopMaterials=Promise.allSettled([
+ applyWorkshopPBR(floor,'concrete_floor_02',5,7,'#b4b0aa'),
+ applyWorkshopPBR(brick,'painted_plaster_wall',4,2,'#d5d5d2')
+]);
 // Downloaded CC0 photographic scans and HDR illumination, served with the site.
 const loader=new THREE.TextureLoader(),anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
 async function surface(material,prefix,tint){
