@@ -1,19 +1,29 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricardos Revier</title><style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0c1118;color:#f1e8dc;font-family:system-ui,Arial}canvas{display:block;touch-action:none}#ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(14px,3vw,28px)}header{display:flex;justify-content:space-between;align-items:start;gap:10px}h1{margin:0;font-size:clamp(19px,4vw,33px);letter-spacing:.12em;font-weight:900;text-shadow:0 3px 15px #000}header small{font-size:10px;letter-spacing:.23em;color:#e7b47e}#state{background:#10182099;border:1px solid #ffffff35;border-radius:24px;padding:9px 13px;font-size:11px;backdrop-filter:blur(12px)}footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}button{pointer-events:auto;background:linear-gradient(130deg,#e6b780,#a66e40);border:1px solid #f3ce9e;border-radius:30px;color:#1b1411;padding:13px 22px;font-size:13px;font-weight:850;letter-spacing:.07em;box-shadow:0 8px 25px #0009}button:active{transform:scale(.98)}#help{font-size:11px;color:#f4e4d4;text-shadow:0 2px 8px #000;text-align:center}#progress{position:fixed;bottom:0;left:0;height:3px;width:0;background:#ffc583;transition:width .2s}#info{position:fixed;left:50%;top:19%;transform:translateX(-50%);font-size:11px;letter-spacing:.14em;text-shadow:0 2px 12px #000;opacity:.9;text-align:center;pointer-events:none;white-space:nowrap}@media(max-width:600px){#info{top:16%;font-size:9px}footer{flex-direction:column;gap:7px}button{padding:12px 20px}}
- #walk{position:fixed;left:16px;bottom:115px;display:none;z-index:5;pointer-events:auto;gap:7px;align-items:center}#walk button{min-width:52px;height:52px;padding:0;border-radius:14px;background:#202c31d9;color:#fff;border:1px solid #ffffff77;font-size:22px;touch-action:none}#walk .pair{display:flex;flex-direction:column;gap:7px}#walk.visible{display:flex}@media(max-width:600px){#walk{bottom:115px;left:12px}#walk button{min-width:49px;height:49px}} </style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div>
+ #walk{position:fixed;left:16px;bottom:115px;display:none;z-index:5;pointer-events:auto;gap:7px;align-items:center}#walk button{min-width:52px;height:52px;padding:0;border-radius:14px;background:#202c31d9;color:#fff;border:1px solid #ffffff77;font-size:22px;touch-action:none}#walk .pair{display:flex;flex-direction:column;gap:7px}#walk.visible{display:flex}@media(max-width:600px){#walk{bottom:115px;left:12px}#walk button{min-width:49px;height:49px}} </style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div><div id="credits" style="position:fixed;right:8px;bottom:5px;font-size:8px;opacity:.45;pointer-events:none">Auto &amp; Sofa: Darmstadt Graphics Group, CC BY 4.0</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 RectAreaLightUniformsLib.init();
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x101923);scene.fog=new THREE.FogExp2(0x101923,.008);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.72;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,100);const target=new THREE.Vector3(0,2.8,0);let orbitX=0,orbitY=0;
 const mat=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 function texture(base,seed=1){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,512,512);let v=seed;const rnd=()=>{v=(v*1664525+1013904223)>>>0;return v/4294967296};for(let i=0;i<25000;i++){const n=Math.floor(rnd()*255);x.fillStyle='rgba('+n+','+n+','+n+','+(rnd()*.055)+')';x.fillRect(rnd()*512,rnd()*512,rnd()*3+1,rnd()*3+1)}for(let i=0;i<65;i++){x.fillStyle='rgba(35,35,35,'+(rnd()*.13)+')';x.beginPath();x.arc(rnd()*512,rnd()*512,rnd()*3.5,0,Math.PI*2);x.fill()}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t}
 const concrete=mat('#b7b7b1');concrete.map=texture('#b1b0aa',3);concrete.bumpMap=concrete.map;concrete.bumpScale=.035;const darkConcrete=mat('#686a68');darkConcrete.map=texture('#727473',9);darkConcrete.bumpMap=darkConcrete.map;darkConcrete.bumpScale=.065;const asphalt=mat('#454749');asphalt.map=texture('#454749',11);asphalt.map.repeat.set(5,3);asphalt.bumpMap=asphalt.map;asphalt.bumpScale=.035;const metal=mat('#263139',.34,.78),edge=mat('#101820',.4,.7),warm=mat('#f1bd83',.36,.3),glass=mat('#192329',.16,.4);
-function box(w,h,d,x,y,z,m,parent=scene){const geometry=new THREE.BoxGeometry(w,h,d);
+// Real objects never have razor-sharp edges: every block gets a small bevel that catches light.
+function box(w,h,d,x,y,z,m,parent=scene){const small=Math.min(w,h,d);const geometry=small>=.03?new RoundedBoxGeometry(w,h,d,2,Math.min(.03,small*.2)):new THREE.BoxGeometry(w,h,d);
 // Physical texture scale: a three metre scan spans three metres of wall.
 if(m===concrete||m===darkConcrete||m===asphalt||m.userData.worldScale){const pos=geometry.attributes.position,n=geometry.attributes.normal,uv=geometry.attributes.uv;for(let i=0;i<pos.count;i++){const nx=Math.abs(n.getX(i)),ny=Math.abs(n.getY(i));const scale=m.userData.worldScale||3;uv.setXY(i,(nx>.5?pos.getZ(i)+z:pos.getX(i)+x)/scale,(ny>.5?pos.getZ(i)+z:pos.getY(i)+y)/scale)}}
 const o=new THREE.Mesh(geometry,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
@@ -81,12 +91,20 @@ box(9.8,7.3,.18,-6.1,3.75,-24.9,brick,interior);
 box(9.8,7.3,.18,6.1,3.75,-24.9,brick,interior);
 box(2.4,4.15,.18,0,5.32,-24.9,brick,interior);
 box(.18,7.3,25,-10.95,3.75,-12.4,brick,interior);box(.18,7.3,25,10.95,3.75,-12.4,brick,interior);
-const ceiling=mat('#868b89',.97,0);ceiling.userData.worldScale=4;box(22,.18,25,0,7.44,-12.4,ceiling,interior);
+const ceiling=mat('#3a3d40',.97,0);ceiling.userData.worldScale=4;box(22,.18,25,0,7.44,-12.4,ceiling,interior);
 const beam=mat('#252a2c',.52,.68),wood=mat('#6b4934',.7),leather=mat('#483126',.85),chrome=mat('#969a9b',.25,.85);
 for(const z of [-2,-7,-12,-17,-22]){box(21.8,.3,.3,0,7.15,z,beam,interior);for(const x of [-10.8,10.8])box(.18,7,.22,x,3.6,z,beam,interior)}
-for(const z of [-5.2,-9.3,-13,-17.5]){const l=box(2.4,.055,.45,0,7.05,z,new THREE.MeshStandardMaterial({color:0xdfe3de,emissive:0xf5f7f2,emissiveIntensity:.7}),interior);const p=new THREE.RectAreaLight(0xf3f5ef,3.5,2.4,.45);p.position.set(0,6.98,z);p.lookAt(0,0,z);interior.add(p)}
+// Long suspended LED tube rows, like a real workshop ceiling.
+const tubeMat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xf2f6ff,emissiveIntensity:2.2});
+for(const x of [-1.7,1.7,6.6])for(const z0 of [-8,-14,-20]){
+ for(let k=0;k<3;k++){const z=z0+1-k*1.9;
+  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.75,12),tubeMat);tube.rotation.x=Math.PI/2;tube.position.set(x,6.2,z);interior.add(tube);
+  box(.12,.04,1.8,x,6.27,z,mat('#1a1d20',.4,.7),interior);
+  for(const dz of [-.7,.7])rod(new THREE.Vector3(x,6.29,z+dz),new THREE.Vector3(x,7.3,z+dz),.005,beam);}
+ const p=new THREE.RectAreaLight(0xeef3ff,x===6.6?3.2:4.2,.12,5.6);p.position.set(x,6.15,z0-.9);p.lookAt(x,0,z0-.9);interior.add(p);
+}
 // Long detailed workshop benches inspired by the supplied reference photo.
-const cabinet=mat('#54717a',.42,.55),cabinetDark=mat('#2b424a',.55,.55),steelTop=mat('#a3a9a7',.38,.7),pegboard=mat('#555f60',.86,.3);
+const cabinet=mat('#1c2a3c',.42,.55),cabinetDark=mat('#121b27',.55,.55),steelTop=mat('#b9bec0',.3,.9),pegboard=mat('#2a2e32',.8,.35);
 function workshopBench(x,z,length=5.7){
  box(length,1.02,.84,x,.72,z,cabinet,interior);
  box(length+.14,.09,.98,x,1.28,z,steelTop,interior);
@@ -109,35 +127,66 @@ function wallBench(z){
  const pieces=interior.children.splice(start);
  const group=new THREE.Group();group.position.set(9.75,0,z);
  for(const piece of pieces){piece.position.x-=6.35;piece.position.z-=z;group.add(piece)}
- group.rotation.y=Math.PI/2;interior.add(group);
+ group.rotation.y=-Math.PI/2;interior.add(group);
 }
 wallBench(-19.9);
 wallBench(-9.9);
-for(const z of [-12.6,-15.7]){
- box(1.25,2.35,.8,9.5,1.35,z,cabinet,interior);
- for(let i=0;i<5;i++){box(.9,.035,.05,9.5,.4+i*.4,z+.42,chrome,interior);box(.08,.07,.07,9.08,.4+i*.4,z+.46,metal,interior)}
-}
-for(const z of [-5,-10,-15,-20]){box(.8,.85,.42,-10.55,1.15,z,mat('#818681',.9),interior);box(.7,.04,.4,-10.55,1.59,z,steelTop,interior)}
+// Low rolling tool cabinets on the left wall, workshop half only.
+for(const z of [-5.4,-10]){box(1.6,1,.62,-10.35,.7,z,cabinet,interior);box(1.68,.05,.68,-10.35,1.225,z,steelTop,interior);
+ for(let i=0;i<4;i++){box(1.5,.2,.02,-10.03,.33+i*.24,z,cabinetDark,interior);box(.02,.03,.9,-10.01,.4+i*.24,z,chrome,interior)}}
 // Spacious separate lounge: sofas FACE the television, never below it.
-const loungeLeather=mat('#532e26',.72),rug=mat('#79685d',.94);
-box(5.8,.035,4.7,-4.3,.21,-15.7,rug,interior);
-box(3.9,.38,1.15,-4.8,.56,-23.55,loungeLeather,interior);
-box(3.9,1.12,.28,-4.8,1.15,-24.13,loungeLeather,interior);
-for(const x of [-6.65,-2.95])box(.28,.7,1.2,x,.85,-23.55,loungeLeather,interior);
-box(2.1,.38,1.1,-7.3,.55,-15.3,loungeLeather,interior);
-box(.28,1.0,1.1,-8.2,1.1,-15.3,loungeLeather,interior);
-box(1.65,.15,.9,-4.8,.68,-15.25,wood,interior);
+const loungeLeather=mat('#532e26',.72),rug=mat('#ffffff',.96);
+// Worn oriental rug, painted procedurally: border bands, a central medallion, fine knot noise.
+{const c=document.createElement('canvas');c.width=512;c.height=416;const g=c.getContext('2d');
+ g.fillStyle='#6e2a22';g.fillRect(0,0,512,416);
+ const band=(m,col,w)=>{g.strokeStyle=col;g.lineWidth=w;g.strokeRect(m,m,512-2*m,416-2*m)};
+ band(14,'#2a1b18',18);band(34,'#b98a5a',6);band(48,'#3c2522',14);band(64,'#c49a66',3);
+ g.save();g.translate(256,208);for(let r=110;r>10;r-=18){g.fillStyle=['#3a1f1c','#b07b4a','#7d2f26','#d1ae7c','#2c1a17'][(r/18|0)%5];g.beginPath();for(let a=0;a<16;a++){const rr=a%2?r*.72:r;g.lineTo(Math.cos(a*Math.PI/8)*rr*1.25,Math.sin(a*Math.PI/8)*rr)}g.closePath();g.fill()}g.restore();
+ let v=7;const rnd=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ for(let i=0;i<60000;i++){g.fillStyle='rgba('+(rnd()>.5?'255,230,200':'0,0,0')+','+(rnd()*.07)+')';g.fillRect(rnd()*512,rnd()*416,1,1)}
+ for(let i=0;i<9;i++){g.fillStyle='rgba(225,200,170,.06)';g.beginPath();g.ellipse(rnd()*512,rnd()*416,40+rnd()*60,20+rnd()*40,rnd()*3,0,7);g.fill()}
+ rug.map=new THREE.CanvasTexture(c);rug.map.colorSpace=THREE.SRGBColorSpace;rug.map.anisotropy=8;}
+const rugMesh=new THREE.Mesh(new THREE.PlaneGeometry(5.6,4.5),rug);rugMesh.rotation.x=-Math.PI/2;rugMesh.position.set(-4.8,.188,-15.6);rugMesh.receiveShadow=true;interior.add(rugMesh);
+// Dark wooden slat panelling behind the lounge sofa.
+box(9.4,3.4,.03,-5.9,1.9,-24.77,mat('#1b1512',.8),interior);
+for(let i=0;i<62;i++)box(.07,3.35,.045,-10.5+i*.15,1.9,-24.73,mat(i%3?'#4a3222':'#553a27',.6),interior);
+// Yellow floor markings around the car bay, the classic workshop accent.
+const yellow=mat('#e0a51c',.5,.1);
+for(const x of [-7.75,-2.65])box(.09,.004,6.6,x,.183,-5.8,yellow,interior);
+for(const z of [-2.5,-9.1])box(5.19,.004,.09,-5.2,.183,z,yellow,interior);
+// Sofas are real models (loaded further below).
+box(1.65,.06,.9,-4.8,.7,-15.25,wood,interior);
 for(const x of [-5.45,-4.15])box(.11,.5,.11,x,.39,-15.25,beam,interior);
 // TV and low console on the left wall, not a divider in the middle of the room.
 const tvGroup=new THREE.Group();tvGroup.position.set(-10.55,0,-19.7);tvGroup.rotation.y=Math.PI/2;interior.add(tvGroup);
-box(4.2,3.8,.22,0,2.05,0,mat('#363b3b'),tvGroup);
-box(3.2,1.95,.16,0,3.05,.18,beam,tvGroup);
-box(3.02,1.76,.02,0,3.05,.28,new THREE.MeshStandardMaterial({color:0x121d29,emissive:0x1d3044,emissiveIntensity:.12,roughness:.28}),tvGroup);
-// Small private wall bar with exactly two stools and a minibar
-box(3.5,.19,.8,5.5,1.5,-15.3,wood,interior);
-for(const x of [4,7])box(.13,1.43,.13,x,.77,-15.3,beam,interior);
-for(const x of [4.85,6.25]){box(.58,.12,.56,x,.95,-14.15,loungeLeather,interior);box(.12,.85,.12,x,.5,-14.15,chrome,interior);box(.47,.05,.44,x,.13,-14.15,beam,interior)}
-box(.85,1.25,.78,7.8,.7,-15.35,metal,interior);box(.65,.52,.035,7.8,.93,-14.94,glass,interior);
+// Slim wall-mounted panel above a low wooden sideboard.
+box(2.6,.55,.45,0,.47,.12,wood,tvGroup);
+box(2.46,1.42,.05,0,2.25,.06,mat('#0b0d0f',.35,.4),tvGroup);
+const tvScreen=new THREE.MeshPhysicalMaterial({color:0x05070a,roughness:.08,metalness:0,clearcoat:1,clearcoatRoughness:.04,emissive:0x0d1a26,emissiveIntensity:.25});
+box(2.38,1.34,.012,0,2.25,.088,tvScreen,tvGroup);
+// Small self-built wooden counter on the wall: two stools, a mini fridge, a shelf for glasses.
+const oak=mat('#7a5233',.62);const plank=mat('#6a4529',.7);
+box(.62,.07,3.1,10.42,1.08,-14.9,oak,interior);
+for(const z of [-13.45,-16.35])box(.08,.9,.08,10.2,.62,z,beam,interior);
+box(.04,.86,3.0,10.82,.62,-14.9,plank,interior);
+for(let i=0;i<6;i++)box(.035,.82,.14,10.79,.62,-16.25+i*.52,oak,interior);
+// Mini fridge under the counter
+const fridge=new THREE.Group();fridge.position.set(10.48,.18,-15.75);interior.add(fridge);
+box(.5,.82,.5,0,.41,0,mat('#121416',.38,.6),fridge);
+box(.02,.7,.42,-.255,.43,0,new THREE.MeshPhysicalMaterial({color:0x1a2a33,roughness:.05,transmission:.35,transparent:true,opacity:.75}),fridge);
+box(.02,.62,.36,-.24,.43,0,new THREE.MeshStandardMaterial({color:0x223,emissive:0x8fc6ff,emissiveIntensity:.35}),fridge);
+for(let i=0;i<5;i++){const c=new THREE.Mesh(new THREE.CylinderGeometry(.033,.033,.12,14),mat(['#b5121b','#c8a038','#2c6e3f','#d9d9d9','#b5121b'][i],.3,.7));c.position.set(-.12,.49,-.14+i*.07);fridge.add(c)}
+// Glass shelf above the counter
+box(.26,.04,2.2,10.72,2.6,-14.9,oak,interior);
+const glassMat=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.04,transmission:1,thickness:.02,ior:1.5,transparent:true});
+for(let i=0;i<7;i++){const g=new THREE.Mesh(new THREE.CylinderGeometry(.038,.03,.13,18,1,true),glassMat);g.position.set(10.72,2.69,-15.85+i*.32);interior.add(g)}
+// Two leather-topped stools
+for(const z of [-14.2,-15.6]){
+ const seat=new THREE.Mesh(new THREE.CylinderGeometry(.21,.2,.09,28),mat('#6b3a22',.55));seat.position.set(9.55,.94,z);seat.castShadow=true;interior.add(seat);
+ rod(new THREE.Vector3(9.55,.2,z),new THREE.Vector3(9.55,.9,z),.03,chrome);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.17,.012,8,28),chrome);ring.rotation.x=Math.PI/2;ring.position.set(9.55,.45,z);interior.add(ring);
+ const foot=new THREE.Mesh(new THREE.CylinderGeometry(.19,.21,.03,28),beam);foot.position.set(9.55,.2,z);interior.add(foot);
+}
 
 // Door to the adjoining room on the back wall, clearly visible and framed
 // The adjoining-room door is built into the actual rear wall.
@@ -184,19 +233,12 @@ for(const x of [-10.65,10.65]){
 const jointMaterial=mat('#676963',1);
 for(let z=-4;z>-24;z-=5)box(21.7,.001,.005,0,.181,z,jointMaterial,interior);
 for(const x of [-6,0,6])box(.005,.001,24,x,.181,-12.3,jointMaterial,interior);
-// Sofa cushions and seams soften the previous block geometry.
-for(const x of [-5.98,-4.8,-3.62]){
- box(1.1,.17,.91,x,.82,-23.5,mat('#674638',.93),interior);
- const cushion=box(1.08,.58,.23,x,1.23,-23.85,mat('#624032',.95),interior);cushion.rotation.x=-.12;
-}
-for(const x of [-6.25,-3.3]){const pillow=box(.5,.48,.18,x,1.12,-23.65,mat('#b5a28d',1),interior);pillow.rotation.z=x<-5?.22:-.22}
-const loungeLight=new THREE.PointLight(0xffc58b,20,10,2);loungeLight.position.set(-5,4.7,-17);interior.add(loungeLight);
-const barLight=new THREE.PointLight(0xffcf9a,20,10,2);barLight.position.set(5.5,4.8,-15.3);interior.add(barLight);
+const loungeLight=new THREE.PointLight(0xffb978,26,11,2);loungeLight.position.set(-5,4.7,-17);interior.add(loungeLight);
+const barLight=new THREE.PointLight(0xffcf9a,20,10,2);barLight.position.set(9.9,3.2,-14.9);interior.add(barLight);
 // Pendant shades and warm pools above the two-seat private bar.
-for(const x of [4.7,6.3]){rod(new THREE.Vector3(x,7.2,-15.3),new THREE.Vector3(x,4.1,-15.3),.018,beam);const shade=new THREE.Mesh(new THREE.ConeGeometry(.34,.24,24,1,true),beam);shade.position.set(x,4,-15.3);interior.add(shade);box(.35,.025,.3,x,3.88,-15.3,ledMat,interior)}
+for(const z of [-14.2,-15.6]){rod(new THREE.Vector3(10.2,7.2,z),new THREE.Vector3(10.2,2.75,z),.012,beam);const shade=new THREE.Mesh(new THREE.ConeGeometry(.2,.22,24,1,true),beam);shade.position.set(10.2,2.65,z);interior.add(shade);const bulb=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),new THREE.MeshStandardMaterial({color:0xffe2b0,emissive:0xffb35a,emissiveIntensity:3}));bulb.position.set(10.2,2.56,z);interior.add(bulb)}
 // Rear utility zone and side room entrance have their own visible wall plane.
-box(17,.12,.12,0,3.65,-20.6,beam,interior);
-box(2.3,3.5,.18,-.15,1.82,-20.96,mat('#aaa69b'),interior);
+
 // Pickup details: mirrors, wheel arches, side glazing, grille and bed.
 for(const x of [-1.23,1.23]){
  box(.025,.62,1.43,x,2.25,.45,glass,car);
@@ -228,12 +270,14 @@ async function applyWorkshopPBR(material,base,repeatX,repeatY,tint){
  maps.forEach(t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeatX,repeatY);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy())});
  maps[0].colorSpace=THREE.SRGBColorSpace;
  material.map=maps[0];material.normalMap=maps[1];material.roughnessMap=maps[2];
- material.normalScale.set(material===floor?.22:.18,material===floor?.22:.18);material.color.set(tint);material.roughness=1;material.needsUpdate=true;
+ material.normalScale.set(material===floor?.22:.18,material===floor?.22:.18);material.color.set(tint);material.roughness=material===floor?.32:1;material.needsUpdate=true;
 }
+// Sealed workshop floor: a soft sheen that mirrors the ceiling lights, like real coated concrete.
+floor.roughness=.32;floor.color.set('#44484c');brick.color.set('#4b4f53');
 const workshopMaterials=Promise.allSettled([
- applyWorkshopPBR(floor,'concrete_floor_02',1,1,'#c5c7c3'),
+ applyWorkshopPBR(floor,'concrete_floor_02',1,1,'#585c61'),
  Promise.resolve(), // Keep the purpose-made aged mineral wall instead of replacing it with smooth plaster.
- applyWorkshopPBR(ceiling,'concrete_wall_009',1,1,'#929794')
+ applyWorkshopPBR(ceiling,'concrete_wall_009',1,1,'#3a3d40')
 ]);
 // Downloaded CC0 photographic scans and HDR illumination, served with the site.
 const loader=new THREE.TextureLoader(),anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
@@ -244,15 +288,58 @@ async function surface(material,prefix,tint){
  material.map=maps[0];material.normalMap=maps[1];material.roughnessMap=maps[2];material.normalScale.set(.65,.65);material.bumpMap=null;material.color.set(tint);material.roughness=1;material.needsUpdate=true;
 }
 const ready=Promise.allSettled([
+ surface(brick,'concrete_wall_009','#55595d').then(()=>brick.normalScale.set(.35,.35)),
  surface(darkConcrete,'concrete_wall_009','#8e9498'),
  surface(concrete,'concrete_wall_009','#c4c7c6'),
  surface(asphalt,'asphalt_03','#b2b8c0'),
  new RGBELoader().loadAsync('./assets/industrial_sunset_puresky_1k.hdr').then(hdr=>{
   const pmrem=new THREE.PMREMGenerator(renderer),env=pmrem.fromEquirectangular(hdr);
-  scene.environment=env.texture;scene.environmentIntensity=.18;
+  env.texture.dispose();
   hdr.mapping=THREE.EquirectangularReflectionMapping;scene.background=hdr;scene.backgroundBlurriness=.13;scene.backgroundIntensity=.25;pmrem.dispose();
  })
 ]);
+
+// Indoor reflections: a lit room, not the sunset sky, so paint, chrome and glass mirror a workshop.
+{const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.32;pmrem.dispose()}
+// Powder-coated cabinets, polished chrome and brushed steel tops.
+for(const m of [cabinet,cabinetDark]){m.roughness=.38;m.metalness=.35}
+chrome.roughness=.12;chrome.metalness=1;chrome.color.set('#c9cccd');
+steelTop.roughness=.32;steelTop.metalness=.9;
+wood.color.set('#5c3a26');wood.roughness=.55;
+
+// Real 3D models (CC0 / CC-BY, see assets/sources.json), meshopt-compressed for phones.
+const gltf=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+function place(url,x,y,z,rotY=0,scale=1,parent=interior){
+ return gltf.loadAsync(url).then(g=>{const o=g.scene;o.position.set(x,y,z);o.rotation.y=rotY;o.scale.setScalar(scale);
+  o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;if(c.material)c.material.envMapIntensity=1}});parent.add(o);return o});
+}
+const floorTop=.18;
+const models=Promise.allSettled([
+ place('./assets/models/car.glb',-5.2,floorTop,-5.8,0,1).then(()=>{car.visible=false}),
+ place('./assets/models/sofa.glb',-4.8,floorTop,-23.6,0,1.15),
+ place('./assets/models/sofa.glb',-7.75,floorTop,-15.3,Math.PI/2,1.15),
+ place('./assets/models/chair.glb',-2.3,floorTop,-17.4,-Math.PI/2,1.25).then(o=>o.traverse(c=>{if(c.isMesh&&/fabric/i.test(c.material.name)){c.material.color.set('#8a5a3a');if(c.material.sheenColor)c.material.sheenColor.set('#c08a5a')}}))
+]);
+// Small workshop props straight from Poly Haven (CC0). Optional: if one fails, the room still works.
+const ph=id=>'https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/'+id+'/'+id+'_1k.gltf';
+const benchTop=1.33;
+Promise.allSettled([
+ place(ph('Drill_01'),9.45,benchTop,-8.4,.6),
+ place(ph('small_oil_can_01'),9.5,benchTop,-11.3,0),
+ place(ph('lubricant_spray'),9.55,benchTop,-11.05,0),
+ place(ph('pipe_wrench'),9.4,benchTop,-18.6,1.2),
+ place(ph('screwdriver'),9.35,benchTop,-18.2,.3),
+ place(ph('propane_torch'),9.5,benchTop,-21.5,0),
+ place(ph('metal_jerrycan'),10.3,floorTop,-6.1,-Math.PI/2),
+ place(ph('plastic_jerrycan'),10.3,floorTop,-5.5,-Math.PI/2),
+ place(ph('hand_truck'),-10.2,floorTop,-7.6,Math.PI/2),
+ place(ph('wooden_crate_02'),-9.9,floorTop,-11.8,.2),
+ place(ph('rusted_wheel_rim_01'),-10.4,floorTop+.3,-12.9,Math.PI/2),
+ place(ph('steel_frame_shelves_02'),-10.35,floorTop,-3.2,Math.PI/2),
+ place(ph('potted_plant_01'),-9.9,floorTop,-23.9,0,1.4),
+ place(ph('potted_plant_04'),-1.6,floorTop,-24,0,1.2),
+ place(ph('Barrel_01'),-10.1,floorTop,-17.2,0)
+]).then(r=>r.forEach((x,i)=>{if(x.status==='rejected')console.warn('Requisite',i,'nicht geladen')}));
 
 // Workshop task lighting, neutral light and real occlusion instead of sunset fill.
 for(const z of [-6,-16]){
@@ -262,9 +349,9 @@ for(const z of [-6,-16]){
  interior.add(task,task.target);
 }
 for(const z of [-9.9,-19.9]){
- box(6.2,.065,.12,6.35,3.79,z-.35,metal,interior);
- box(6.0,.025,.075,6.35,3.747,z-.35,ledMat,interior);
- const task=new THREE.RectAreaLight(0xf6f4e9,4.5,6,.2);task.position.set(6.35,3.72,z-.25);task.lookAt(6.35,1.1,z+.4);interior.add(task);
+ box(.12,.065,6.2,10.05,3.79,z,metal,interior);
+ box(.075,.025,6.0,10.05,3.747,z,ledMat,interior);
+ const task=new THREE.RectAreaLight(0xf6f4e9,4.5,6,.2);task.position.set(9.95,3.72,z);task.lookAt(9.2,1.1,z);interior.add(task);
 }
 // Concrete curb and surface-mounted services give the walls thickness and scale.
 const curb=mat('#858a87',.98);
@@ -295,12 +382,12 @@ section.rotateY(Math.PI/2);section.computeBoundingBox();section.center();
 slats.forEach(g=>{while(g.children.length)g.remove(g.children[0]);const mesh=new THREE.Mesh(section,slat);mesh.castShadow=mesh.receiveShadow=true;g.add(mesh)});
 const bottomRail=box(9.05,.09,.21,0,.34,.18,edge,door);
 const grip=box(.65,.055,.07,0,.49,.3,metal,door);
-let amount=0,goal=0,last=performance.now(),touching=false,sx=0,sy=0,dragGate=false;
+let garageAssetsReady,amount=0,goal=0,last=performance.now(),touching=false,sx=0,sy=0,dragGate=false;
 const btn=document.getElementById('door'),help=document.getElementById('help');
 function setGoal(value){goal=value;btn.textContent=value?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑';btn.setAttribute('aria-expanded',String(!!value))}
 btn.onclick=()=>setGoal(goal===0?1:0);
 help.textContent='Materialien werden geladen …';
-Promise.all([ready,workshopMaterials]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Linke Hälfte: sanft ziehen zum Gehen · rechte Hälfte: umsehen';window.garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
+Promise.all([ready,workshopMaterials,models]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Linke Hälfte: sanft ziehen zum Gehen · rechte Hälfte: umsehen';window.garageAssetsReady=!failed;garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
 // Full 360-degree first-person looking, with vertical tilt. A vertical swipe
 // only controls the roller door while it is closed; once inside, all swipes look.
 let yaw=0,pitch=0,inside=false;const walker=new THREE.Vector3(0,1.78,-3.1);const moveKeys=new Set();let touchWalk=0;
@@ -343,7 +430,15 @@ function releasePointer(e){
 renderer.domElement.addEventListener('pointerup',releasePointer);
 renderer.domElement.addEventListener('pointercancel',releasePointer);
 renderer.domElement.addEventListener('lostpointercapture',releasePointer);
-function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
+// Post-processing: ambient occlusion darkens corners and contact points, bloom lets lamps glow.
+const composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(innerWidth,innerHeight,{type:THREE.HalfFloatType,samples:4}));composer.addPass(new RenderPass(scene,camera));
+const ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.updateGtaoMaterial({radius:.6,distanceExponent:1.4,thickness:1.2,scale:1.1,samples:12});ao.blendIntensity=.9;composer.addPass(ao);
+const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.22,.45,.92);composer.addPass(bloom);composer.addPass(new OutputPass());
+// Keep phones smooth: if frames get slow, drop the heaviest effect first, then resolution.
+let perfFrames=0,perfTime=0,perfStep=0;
+function watchPerformance(dt){perfFrames++;perfTime+=dt;if(perfFrames<90)return;const avg=perfTime/perfFrames;perfFrames=0;perfTime=0;
+ if(avg>.038&&perfStep===0){ao.enabled=false;perfStep=1}else if(avg>.038&&perfStep===1){renderer.setPixelRatio(1);composer.setPixelRatio(1);resize();perfStep=2}}
+function resize(){renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
 function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-last)/1000,.05);last=now;if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
  slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
  bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
@@ -368,7 +463,7 @@ if(inside){
  velocityZ+=(targetZ-velocityZ)*acceleration;
  const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
  const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-23.6,-1.6);
- const obstacles=[[-5.2,-5.8,2.15,3.35],[-4.8,-23.55,2.4,1.15],[-7.3,-15.3,1.45,1.05],[-4.8,-12.65,2.45,.4],[6.35,-19.9,3.6,.8],[6.35,-9.9,3.6,.8],[5.5,-15.3,2.15,.95]];
+ const obstacles=[[-5.2,-5.8,1.75,2.75],[-4.8,-23.6,1.85,.9],[-7.75,-15.3,.9,1.85],[-4.8,-15.25,1.15,.75],[-2.3,-17.4,.6,.6],[9.75,-19.9,.65,3.3],[9.75,-9.9,.65,3.3],[10.1,-14.9,.85,1.7],[-10.1,-11,.9,10.5]];
  const blocked=(x,z)=>obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz);
  if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
  if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;
@@ -378,6 +473,6 @@ camera.fov=THREE.MathUtils.lerp(innerWidth<innerHeight?53:43,innerWidth<innerHei
 const baseYaw=Math.PI; // face into the workshop on entering
 const viewYaw=baseYaw+yaw,viewPitch=pitch;
 const lookDirection=new THREE.Vector3(Math.sin(viewYaw)*Math.cos(viewPitch),Math.sin(viewPitch),Math.cos(viewYaw)*Math.cos(viewPitch));
-camera.lookAt(camera.position.clone().add(lookDirection));renderer.render(scene,camera)
+camera.lookAt(camera.position.clone().add(lookDirection));composer.render();if(garageAssetsReady!==undefined)watchPerformance(dt)
 }requestAnimationFrame(animate);
 </script></body></html>

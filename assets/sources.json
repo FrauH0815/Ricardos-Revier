@@ -33,5 +33,29 @@
     "source": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_puresky_1k.hdr",
     "file": "industrial_sunset_puresky_1k.hdr",
     "license": "CC0-1.0"
+  },
+  {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept",
+    "file": "models/car.glb",
+    "license": "CC-BY-4.0",
+    "credit": "© 2024 Darmstadt Graphics Group GmbH, based on CC0 model by Unity Fan; compressed (meshopt, WebP)"
+  },
+  {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenWoodLeatherSofa",
+    "file": "models/sofa.glb",
+    "license": "CC-BY-4.0",
+    "credit": "© 2024 Darmstadt Graphics Group GmbH; compressed (meshopt, WebP)"
+  },
+  {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair",
+    "file": "models/chair.glb",
+    "license": "CC0-1.0",
+    "credit": "© 2020 Wayfair, LLC"
+  },
+  {
+    "source": "https://polyhaven.com/models",
+    "file": "(loaded at runtime from dl.polyhaven.org)",
+    "license": "CC0-1.0",
+    "credit": "Poly Haven workshop props"
   }
 ]
