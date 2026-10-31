@@ -69,12 +69,23 @@ for(const z of [-5.3,-7.4]){box(1.15,2.1,.75,3.75,1.13,z,mat('#383f42',.4,.65),i
 box(3,.35,1.25,-2.6,.57,-11.25,leather,interior);box(3,1.12,.3,-2.6,1.13,-11.83,leather,interior);for(const x of [-3.96,-1.24])box(.27,.68,1.3,x,.84,-11.25,leather,interior);
 box(3.7,.035,2.8,-2.5,.22,-8.75,mat('#64554d'),interior);box(2.6,.15,1.05,-2.4,.65,-8.65,wood,interior);for(const x of [-3.35,-1.45])box(.12,.45,.12,x,.38,-8.65,beam,interior);
 box(2.65,1.52,.14,-2.55,3.25,-14.05,beam,interior);box(2.45,1.32,.015,-2.55,3.25,-13.96,new THREE.MeshStandardMaterial({color:0x111a22,emissive:0x14253b,emissiveIntensity:.45,roughness:.2}),interior);
+// Hexagon LED ceiling installation above the pickup
+const ledMat=new THREE.MeshStandardMaterial({color:0xf6faff,emissive:0xc9e8ff,emissiveIntensity:3,roughness:.25});
+function ledSegment(a,b){const start=new THREE.Vector3(...a),end=new THREE.Vector3(...b),diff=end.clone().sub(start);const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,diff.length(),8),ledMat);mesh.position.copy(start).add(end).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),diff.normalize());interior.add(mesh)}
+for(let col=0;col<3;col++)for(let row=0;row<3;row++){const cx=-3.1+col*1.18+(row%2)*.59,cz=-3.8-row*1.06,r=.67;const pts=Array.from({length:6},(_,i)=>[cx+Math.cos(Math.PI/3*i)*r,5.82,cz+Math.sin(Math.PI/3*i)*r]);for(let i=0;i<6;i++)ledSegment(pts[i],pts[(i+1)%6])}
+const hexLight=new THREE.PointLight(0xd9ecff,32,11,2);hexLight.position.set(-2.1,5.65,-5.4);interior.add(hexLight);
 // Bar rechts mit genau zwei Hockern
 box(2.2,.19,.85,2.85,1.7,-8.7,wood,interior);for(const x of [2.0,3.7])box(.12,1.6,.12,x,.84,-8.7,beam,interior);
 for(const x of [2.3,3.4]){box(.58,.12,.55,x,.95,-7.9,leather,interior);box(.11,.85,.11,x,.5,-7.9,chrome,interior);box(.48,.055,.43,x,.13,-7.9,beam,interior)}
 box(.9,2.35,.95,3.8,1.2,-10.1,metal,interior);box(.7,.7,.025,3.8,1.65,-9.6,glass,interior);
+// Wall-mounted screen above the bar and a compact standing table
+box(1.85,1.05,.12,3.13,3.55,-14.03,beam,interior);
+box(1.68,.88,.018,3.13,3.55,-13.95,new THREE.MeshStandardMaterial({color:0x101e29,emissive:0x18324a,emissiveIntensity:.75,roughness:.2}),interior);
+const tableTop=new THREE.Mesh(new THREE.CylinderGeometry(.56,.56,.095,36),wood);tableTop.position.set(.55,1.04,-10.4);tableTop.castShadow=true;interior.add(tableTop);
+const tableStem=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.95,16),chrome);tableStem.position.set(.55,.53,-10.4);interior.add(tableStem);
+const tableFoot=new THREE.Mesh(new THREE.CylinderGeometry(.36,.36,.055,28),beam);tableFoot.position.set(.55,.09,-10.4);interior.add(tableFoot);
 // Pickup: Fahrzeugkörper, Fahrerkabine, Reifen, Kühler, Licht
-const car=new THREE.Group();interior.add(car);car.position.set(-.25,.05,-5.25);
+const car=new THREE.Group();interior.add(car);car.position.set(-2.15,.05,-5.2);
 const orange=mat('#b84c1f',.27,.48),black=mat('#15191b',.63,.2),rubber=mat('#131516',.95),light=mat('#f8e9ca',.2,.25);
 box(2.45,.8,4.5,0,1.14,0,orange,car);box(2.48,.24,1.6,0,1.65,-1.47,orange,car);box(2.25,1.1,2.05,0,2.07,.45,orange,car);
 const windshield=box(2.06,.72,.055,0,2.26,1.5,glass,car);windshield.rotation.x=-.27;
