@@ -1,4 +1,4 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricardos Revier – Außenansicht</title><style>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricardos Revier</title><style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0c1118;color:#f1e8dc;font-family:system-ui,Arial}canvas{display:block;touch-action:none}#ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(14px,3vw,28px)}header{display:flex;justify-content:space-between;align-items:start;gap:10px}h1{margin:0;font-size:clamp(19px,4vw,33px);letter-spacing:.12em;font-weight:900;text-shadow:0 3px 15px #000}header small{font-size:10px;letter-spacing:.23em;color:#e7b47e}#state{background:#10182099;border:1px solid #ffffff35;border-radius:24px;padding:9px 13px;font-size:11px;backdrop-filter:blur(12px)}footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}button{pointer-events:auto;background:linear-gradient(130deg,#e6b780,#a66e40);border:1px solid #f3ce9e;border-radius:30px;color:#1b1411;padding:13px 22px;font-size:13px;font-weight:850;letter-spacing:.07em;box-shadow:0 8px 25px #0009}button:active{transform:scale(.98)}#help{font-size:11px;color:#f4e4d4;text-shadow:0 2px 8px #000;text-align:center}#progress{position:fixed;bottom:0;left:0;height:3px;width:0;background:#ffc583;transition:width .2s}#info{position:fixed;left:50%;top:19%;transform:translateX(-50%);font-size:11px;letter-spacing:.14em;text-shadow:0 2px 12px #000;opacity:.9;text-align:center;pointer-events:none;white-space:nowrap}@media(max-width:600px){#info{top:16%;font-size:9px}footer{flex-direction:column;gap:7px}button{padding:12px 20px}}
 </style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div>
 <script type="module">
@@ -11,10 +11,38 @@ function texture(base,seed=1){const c=document.createElement('canvas');c.width=c
 const concrete=mat('#b7b7b1');concrete.map=texture('#b1b0aa',3);const darkConcrete=mat('#686a68');darkConcrete.map=texture('#727473',9);const asphalt=mat('#454749');asphalt.map=texture('#454749',11);asphalt.map.repeat.set(5,3);const metal=mat('#263139',.34,.78),edge=mat('#101820',.4,.7),warm=mat('#f1bd83',.36,.3),glass=mat('#192329',.16,.4);
 function box(w,h,d,x,y,z,m,parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
 box(60,.12,45,0,-.1,8,asphalt);
-box(16,10,1.5,0,5,-1.2,concrete);box(13,.45,1.5,0,9.75,-1.2,darkConcrete);
-const opening=box(9.35,5.9,.18,0,3.25,-.34,edge);const cavity=box(8.92,5.48,.2,0,3.23,-.19,glass);
-const interior=new THREE.Group();scene.add(interior);box(8.9,.15,7,0,.1,-4,mat('#555452'),interior);box(8.9,5.6,.15,0,2.9,-7,mat('#5e5550'),interior);box(.15,5.5,7,-4.35,2.9,-3.8,mat('#4e4844'),interior);box(.15,5.5,7,4.35,2.9,-3.8,mat('#4e4844'),interior);box(4,.18,1.4,2.1,1.25,-6.1,mat('#614533'),interior);box(1.3,2.2,1.1,3.2,1.1,-5.3,metal,interior);
-const car=new THREE.Group();interior.add(car);car.position.set(-.7,0,-4.3);const orange=mat('#c6531d',.3,.38);box(3.5,1.05,2.1,0,1.05,0,orange,car);box(1.8,.95,1.95,-.35,1.98,0,orange,car);box(1.7,.65,1.97,-.35,2.13,0,glass,car);for(const x of [-1.15,1.1])for(const z of [-1.05,1.05]){const tire=new THREE.Mesh(new THREE.CylinderGeometry(.49,.49,.27,24),mat('#111316'));tire.rotation.x=Math.PI/2;tire.position.set(x,.53,z);car.add(tire)}box(.08,.28,1.6,-1.79,1.3,0,metal,car);
+box(3.4,10,1.5,-6.3,5,-1.2,concrete);box(3.4,10,1.5,6.3,5,-1.2,concrete);box(9.2,3.65,1.5,0,8.175,-1.2,concrete);box(9.2,.28,1.5,0,.14,-1.2,concrete);box(13,.45,1.5,0,9.75,-1.2,darkConcrete);
+box(.16,5.9,.26,-4.64,3.25,-.34,edge);box(.16,5.9,.26,4.64,3.25,-.34,edge);box(9.35,.18,.26,0,6.25,-.34,edge);
+const interior=new THREE.Group();scene.add(interior);
+const floor=mat('#55514d');floor.map=texture('#77716a',16);floor.map.repeat.set(2,3);
+const brick=mat('#716058');brick.map=texture('#80675d',21);
+box(9.15,.2,13.8,0,.08,-7.4,floor,interior);box(9.15,6.1,.18,0,3.15,-14.25,brick,interior);box(.18,6.1,13.8,-4.5,3.15,-7.35,brick,interior);box(.18,6.1,13.8,4.5,3.15,-7.35,brick,interior);box(9.15,.18,13.8,0,6.24,-7.35,mat('#35393b'),interior);
+const beam=mat('#252a2c',.52,.68),wood=mat('#6b4934',.7),leather=mat('#483126',.85),chrome=mat('#969a9b',.25,.85);
+for(const z of [-2,-5,-8,-11,-14]){box(9.1,.23,.26,0,5.93,z,beam,interior);box(.13,5.7,.18,-4.33,3,z,beam,interior);box(.13,5.7,.18,4.33,3,z,beam,interior)}
+for(const z of [-5.2,-9.3,-13]){const l=box(2.4,.055,.45,0,5.73,z,new THREE.MeshStandardMaterial({color:0xffe6bd,emissive:0xffb85f,emissiveIntensity:1.8}),interior);const p=new THREE.PointLight(0xffcb91,15,10,2);p.position.set(0,5.5,z);interior.add(p)}
+// Werkbank und Werkzeugwand
+box(3.2,.18,.95,2.72,1.35,-11.9,wood,interior);for(const x of [1.45,3.9])box(.16,1.25,.15,x,.69,-11.9,beam,interior);
+box(3.3,1.7,.1,2.72,2.55,-12.47,mat('#343a3c'),interior);
+for(let i=0;i<9;i++){const x=1.45+(i%5)*.54,y=2.05+Math.floor(i/5)*.65;box(.045,.42,.08,x,y,-12.36,chrome,interior)}
+// Werkzeugschränke und Metallregale
+for(const z of [-5.3,-7.4]){box(1.15,2.1,.75,3.75,1.13,z,mat('#383f42',.4,.65),interior);for(let i=0;i<4;i++)box(.75,.025,.05,3.75,.45+i*.44,z+.4,chrome,interior)}
+// Couch, Teppich, TV
+box(3,.35,1.25,-2.6,.57,-11.25,leather,interior);box(3,1.12,.3,-2.6,1.13,-11.83,leather,interior);for(const x of [-3.96,-1.24])box(.27,.68,1.3,x,.84,-11.25,leather,interior);
+box(3.7,.035,2.8,-2.5,.22,-8.75,mat('#64554d'),interior);box(2.6,.15,1.05,-2.4,.65,-8.65,wood,interior);for(const x of [-3.35,-1.45])box(.12,.45,.12,x,.38,-8.65,beam,interior);
+box(2.65,1.52,.14,-2.55,3.25,-14.05,beam,interior);box(2.45,1.32,.015,-2.55,3.25,-13.96,new THREE.MeshStandardMaterial({color:0x111a22,emissive:0x14253b,emissiveIntensity:.45,roughness:.2}),interior);
+// Bar rechts mit genau zwei Hockern
+box(2.2,.19,.85,2.85,1.7,-8.7,wood,interior);for(const x of [2.0,3.7])box(.12,1.6,.12,x,.84,-8.7,beam,interior);
+for(const x of [2.3,3.4]){box(.58,.12,.55,x,.95,-7.9,leather,interior);box(.11,.85,.11,x,.5,-7.9,chrome,interior);box(.48,.055,.43,x,.13,-7.9,beam,interior)}
+box(.9,2.35,.95,3.8,1.2,-10.1,metal,interior);box(.7,.7,.025,3.8,1.65,-9.6,glass,interior);
+// Pickup: Fahrzeugkörper, Fahrerkabine, Reifen, Kühler, Licht
+const car=new THREE.Group();interior.add(car);car.position.set(-.25,.05,-5.25);
+const orange=mat('#b84c1f',.27,.48),black=mat('#15191b',.63,.2),rubber=mat('#131516',.95),light=mat('#f8e9ca',.2,.25);
+box(2.45,.8,4.5,0,1.14,0,orange,car);box(2.48,.24,1.6,0,1.65,-1.47,orange,car);box(2.25,1.1,2.05,0,2.07,.45,orange,car);
+const windshield=box(2.06,.72,.055,0,2.26,1.5,glass,car);windshield.rotation.x=-.27;
+for(const x of [-1.25,1.25])for(const z of [-1.5,1.35]){const t=new THREE.Mesh(new THREE.CylinderGeometry(.53,.53,.29,28),rubber);t.rotation.z=Math.PI/2;t.position.set(x,.62,z);t.castShadow=true;car.add(t);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,.3,20),chrome);hub.rotation.z=Math.PI/2;hub.position.copy(t.position);car.add(hub)}
+box(2.28,.43,.15,0,1.15,2.3,chrome,car);box(2.2,.23,.07,0,1.47,2.37,black,car);
+for(const x of [-.89,.89]){box(.48,.21,.08,x,1.58,2.35,light,car);box(.4,.16,.07,x,1.06,-2.34,mat('#991e16',.3),car)}
+box(2.4,.16,.28,0,.77,2.39,chrome,car);
 const door=new THREE.Group();scene.add(door);door.position.set(0,0,.14);const slat=mat('#34424c',.38,.82);const lip=mat('#131f28',.34,.8);const rail=mat('#1d272e',.4,.7);
 box(.23,6.1,.5,-4.61,3.15,.1,rail);box(.23,6.1,.5,4.61,3.15,.1,rail);box(9.8,.55,.75,0,6.38,.15,edge);box(9.7,.11,.2,0,6.06,.58,metal);
 const slats=[];for(let i=0;i<25;i++){const g=new THREE.Group();door.add(g);const y=.47+i*.225;g.position.y=y;box(9.05,.21,.18,0,0,.04,slat,g);box(9.05,.026,.24,0,-.103,.12,lip,g);box(9.05,.018,.17,0,.095,.145,mat('#6b7980',.32,.75),g);slats.push(g)}
@@ -27,5 +55,5 @@ const mainLamp=new THREE.PointLight(0xffd39a,15,11,2);mainLamp.position.set(0,5.
 box(15,.15,2.7,0,-.015,3.2,mat('#62625d'));for(let i=-8;i<=8;i++){box(.015,.014,2.7,i*.9,.07,3.2,mat('#41413f'))}
 let amount=0,goal=0;const btn=document.getElementById('door');btn.onclick=()=>{goal=goal===0?1:0;btn.textContent=goal?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑'};let touching=false,sx=0,sy=0;renderer.domElement.addEventListener('pointerdown',e=>{touching=true;sx=e.clientX;sy=e.clientY});renderer.domElement.addEventListener('pointermove',e=>{if(!touching)return;orbitX=Math.max(-.27,Math.min(.27,orbitX+(e.clientX-sx)*.0014));orbitY=Math.max(-.1,Math.min(.13,orbitY+(e.clientY-sy)*.001));sx=e.clientX;sy=e.clientY});renderer.domElement.addEventListener('pointerup',()=>touching=false);
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.fov=w<h?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
-function animate(){requestAnimationFrame(animate);amount+=(goal-amount)*.025;const visible=Math.round(amount*25);slats.forEach((g,i)=>{const lift=amount*5.9;g.position.y=.47+i*.225+Math.min(lift,6.1-(.47+i*.225));g.visible=g.position.y<6.28});document.getElementById('progress').style.width=(amount*100)+'%';const distance=innerWidth<innerHeight?21:18;camera.position.set(orbitX*12,4.1+orbitY*6,distance);camera.lookAt(target);renderer.render(scene,camera)}animate();
+function animate(){requestAnimationFrame(animate);amount+=(goal-amount)*.025;const visible=Math.round(amount*25);slats.forEach((g,i)=>{const lift=amount*5.9;g.position.y=.47+i*.225+Math.min(lift,6.1-(.47+i*.225));g.visible=g.position.y<6.28});document.getElementById('progress').style.width=(amount*100)+'%';const distance=innerWidth<innerHeight?21:18;const entry=Math.max(0,(amount-.65)/.35);camera.position.set(orbitX*12*(1-entry*.65),4.1+orbitY*6,THREE.MathUtils.lerp(distance,-2.2,entry));camera.lookAt(0,THREE.MathUtils.lerp(2.8,2.6,entry),THREE.MathUtils.lerp(0,-8,entry));renderer.render(scene,camera)}animate();
 </script></body></html>
