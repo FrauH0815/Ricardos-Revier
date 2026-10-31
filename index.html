@@ -286,14 +286,14 @@ const btn=document.getElementById('door'),help=document.getElementById('help');
 function setGoal(value){goal=value;btn.textContent=value?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑';btn.setAttribute('aria-expanded',String(!!value))}
 btn.onclick=()=>setGoal(goal===0?1:0);
 help.textContent='Materialien werden geladen …';
-Promise.all([ready,workshopMaterials]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Links ziehen: laufen · Rechts ziehen: umsehen · gleichzeitig möglich';window.garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
+Promise.all([ready,workshopMaterials]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Linke Hälfte: sanft ziehen zum Gehen · rechte Hälfte: umsehen';window.garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
 // Full 360-degree first-person looking, with vertical tilt. A vertical swipe
 // only controls the roller door while it is closed; once inside, all swipes look.
 let yaw=0,pitch=0,inside=false;const walker=new THREE.Vector3(0,1.78,-3.1);const moveKeys=new Set();let touchWalk=0;
 addEventListener('keydown',e=>{const k={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'}[e.code];if(k){moveKeys.add(k);e.preventDefault()}});addEventListener('keyup',e=>{const k={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'}[e.code];if(k)moveKeys.delete(k)});
 // Two independent touch zones: left thumb moves, right thumb turns the camera.
 // Both fingers can be held at once. Keyboard WASD remains supported.
-const fingers=new Map();let walkOrigin=null,lookPointer=null,strafeTouch=0;
+const fingers=new Map();let walkOrigin=null,lookPointer=null,strafeTouch=0,velocityX=0,velocityZ=0,lookDX=0,lookDY=0;
 renderer.domElement.addEventListener('pointerdown',e=>{
  e.preventDefault();renderer.domElement.setPointerCapture(e.pointerId);
  const kind=inside?(e.clientX<innerWidth*.48?'move':'look'):'gate';
@@ -306,10 +306,12 @@ renderer.domElement.addEventListener('pointermove',e=>{
  const p=fingers.get(e.pointerId);if(!p)return;e.preventDefault();
  const dx=e.clientX-p.lastX,dy=e.clientY-p.lastY;
  if(p.kind==='move'){
-   touchWalk=THREE.MathUtils.clamp((p.y-e.clientY)/Math.max(80,innerHeight*.14),-1,1);
-   strafeTouch=THREE.MathUtils.clamp((e.clientX-p.x)/Math.max(80,innerWidth*.2),-1,1);
+   const radius=Math.max(65,Math.min(105,innerWidth*.24));
+   const vx=(e.clientX-p.x)/radius,vy=(p.y-e.clientY)/radius;
+   const mag=Math.hypot(vx,vy),dead=.12,scale=mag>dead?Math.min(1,(mag-dead)/(1-dead))/mag:0;
+   touchWalk=vy*scale;strafeTouch=vx*scale;
  }else if(p.kind==='look'){
-   yaw-=dx*.007;pitch=THREE.MathUtils.clamp(pitch-dy*.005,-1.35,1.35);
+   lookDX+=dx;lookDY+=dy;
  }else if(p.kind==='gate'){
    if(Math.abs(e.clientY-p.y)>6&&Math.abs(e.clientY-p.y)>Math.abs(e.clientX-p.x)){
      amount=THREE.MathUtils.clamp(amount-dy/innerHeight*1.7,0,1);goal=amount;dragGate=true;
@@ -332,7 +334,31 @@ function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-last
  slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
  bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
  document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);inside=entry>.85;
-if(inside&&(moveKeys.size||Math.abs(touchWalk)>.01||Math.abs(strafeTouch)>.01)){const speed=3.1*dt,view=Math.PI+yaw;const fx=Math.sin(view),fz=Math.cos(view),rx=-fz,rz=fx;let mx=fx*touchWalk+rx*strafeTouch,mz=fz*touchWalk+rz*strafeTouch;if(moveKeys.has('forward')){mx+=fx;mz+=fz}if(moveKeys.has('back')){mx-=fx;mz-=fz}if(moveKeys.has('right')){mx+=rx;mz+=rz}if(moveKeys.has('left')){mx-=rx;mz-=rz}const length=Math.hypot(mx,mz)||1;const nextX=THREE.MathUtils.clamp(walker.x+mx/length*speed,-9.8,9.8),nextZ=THREE.MathUtils.clamp(walker.z+mz/length*speed,-23.6,-1.6);const blocked=(x,z)=>{const obstacles=[[-5.2,-5.8,2.15,3.35],[-4.8,-17.6,2.4,1.15],[-7.3,-15.3,1.45,1.05],[-4.8,-12.65,2.45,.4],[6.35,-19.9,3.6,.8],[6.35,-9.9,3.6,.8],[5.5,-15.3,2.15,.95]];return obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)};if(!blocked(nextX,walker.z))walker.x=nextX;if(!blocked(walker.x,nextZ))walker.z=nextZ}
+// Frame-rate-independent damped camera and walking velocity.
+const turnBlend=1-Math.exp(-22*dt);
+const stepX=lookDX*turnBlend,stepY=lookDY*turnBlend;
+yaw-=stepX*.0052;pitch=THREE.MathUtils.clamp(pitch-stepY*.0038,-1.3,1.3);
+lookDX-=stepX;lookDY-=stepY;
+if(inside){
+ const view=Math.PI+yaw,fx=Math.sin(view),fz=Math.cos(view),rx=-fz,rz=fx;
+ let forward=touchWalk,side=strafeTouch;
+ if(moveKeys.has('forward'))forward+=1;
+ if(moveKeys.has('back'))forward-=1;
+ if(moveKeys.has('right'))side+=1;
+ if(moveKeys.has('left'))side-=1;
+ const magnitude=Math.max(1,Math.hypot(forward,side));
+ const targetX=(fx*forward+rx*side)/magnitude*3.7;
+ const targetZ=(fz*forward+rz*side)/magnitude*3.7;
+ const acceleration=1-Math.exp(-(Math.abs(forward)+Math.abs(side)>.01?12:18)*dt);
+ velocityX+=(targetX-velocityX)*acceleration;
+ velocityZ+=(targetZ-velocityZ)*acceleration;
+ const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
+ const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-23.6,-1.6);
+ const obstacles=[[-5.2,-5.8,2.15,3.35],[-4.8,-17.6,2.4,1.15],[-7.3,-15.3,1.45,1.05],[-4.8,-12.65,2.45,.4],[6.35,-19.9,3.6,.8],[6.35,-9.9,3.6,.8],[5.5,-15.3,2.15,.95]];
+ const blocked=(x,z)=>obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz);
+ if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
+ if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;
+}else{velocityX=0;velocityZ=0}
 if(inside)camera.position.copy(walker);else camera.position.set(0,THREE.MathUtils.lerp(4.1,1.78,entry),THREE.MathUtils.lerp(distance,-3.1,entry));
 camera.fov=THREE.MathUtils.lerp(innerWidth<innerHeight?53:43,innerWidth<innerHeight?72:65,entry);camera.updateProjectionMatrix();
 const baseYaw=Math.PI; // face into the workshop on entering
