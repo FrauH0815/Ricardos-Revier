@@ -1,20 +1,25 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricardos Revier</title><style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#0c1118;color:#f1e8dc;font-family:system-ui,Arial}canvas{display:block;touch-action:none}#ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(14px,3vw,28px)}header{display:flex;justify-content:space-between;align-items:start;gap:10px}h1{margin:0;font-size:clamp(19px,4vw,33px);letter-spacing:.12em;font-weight:900;text-shadow:0 3px 15px #000}header small{font-size:10px;letter-spacing:.23em;color:#e7b47e}#state{background:#10182099;border:1px solid #ffffff35;border-radius:24px;padding:9px 13px;font-size:11px;backdrop-filter:blur(12px)}footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}button{pointer-events:auto;background:linear-gradient(130deg,#e6b780,#a66e40);border:1px solid #f3ce9e;border-radius:30px;color:#1b1411;padding:13px 22px;font-size:13px;font-weight:850;letter-spacing:.07em;box-shadow:0 8px 25px #0009}button:active{transform:scale(.98)}#help{font-size:11px;color:#f4e4d4;text-shadow:0 2px 8px #000;text-align:center}#progress{position:fixed;bottom:0;left:0;height:3px;width:0;background:#ffc583;transition:width .2s}#info{position:fixed;left:50%;top:19%;transform:translateX(-50%);font-size:11px;letter-spacing:.14em;text-shadow:0 2px 12px #000;opacity:.9;text-align:center;pointer-events:none;white-space:nowrap}@media(max-width:600px){#info{top:16%;font-size:9px}footer{flex-direction:column;gap:7px}button{padding:12px 20px}}
 </style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x101923);scene.fog=new THREE.FogExp2(0x101923,.022);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
+import * as THREE from 'three';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x101923);scene.fog=new THREE.FogExp2(0x101923,.008);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,100);const target=new THREE.Vector3(0,2.8,0);let orbitX=0,orbitY=0;
 const mat=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 function texture(base,seed=1){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,512,512);let v=seed;const rnd=()=>{v=(v*1664525+1013904223)>>>0;return v/4294967296};for(let i=0;i<25000;i++){const n=Math.floor(rnd()*255);x.fillStyle='rgba('+n+','+n+','+n+','+(rnd()*.055)+')';x.fillRect(rnd()*512,rnd()*512,rnd()*3+1,rnd()*3+1)}for(let i=0;i<65;i++){x.fillStyle='rgba(35,35,35,'+(rnd()*.13)+')';x.beginPath();x.arc(rnd()*512,rnd()*512,rnd()*3.5,0,Math.PI*2);x.fill()}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t}
 const concrete=mat('#b7b7b1');concrete.map=texture('#b1b0aa',3);concrete.bumpMap=concrete.map;concrete.bumpScale=.035;const darkConcrete=mat('#686a68');darkConcrete.map=texture('#727473',9);darkConcrete.bumpMap=darkConcrete.map;darkConcrete.bumpScale=.065;const asphalt=mat('#454749');asphalt.map=texture('#454749',11);asphalt.map.repeat.set(5,3);asphalt.bumpMap=asphalt.map;asphalt.bumpScale=.035;const metal=mat('#263139',.34,.78),edge=mat('#101820',.4,.7),warm=mat('#f1bd83',.36,.3),glass=mat('#192329',.16,.4);
-function box(w,h,d,x,y,z,m,parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function box(w,h,d,x,y,z,m,parent=scene){const geometry=new THREE.BoxGeometry(w,h,d);
+// Physical texture scale: a three metre scan spans three metres of wall.
+if(m===concrete||m===darkConcrete||m===asphalt){const pos=geometry.attributes.position,n=geometry.attributes.normal,uv=geometry.attributes.uv;for(let i=0;i<pos.count;i++){const nx=Math.abs(n.getX(i)),ny=Math.abs(n.getY(i));uv.setXY(i,(nx>.5?pos.getZ(i)+z:pos.getX(i)+x)/3,(ny>.5?pos.getZ(i)+z:pos.getY(i)+y)/3)}}
+const o=new THREE.Mesh(geometry,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
 box(60,.12,45,0,-.1,8,asphalt);
 box(5.1,10,1.5,-7.15,5,-1.2,darkConcrete);box(5.1,10,1.5,7.15,5,-1.2,darkConcrete);box(9.2,3.65,1.5,0,8.175,-1.2,darkConcrete);box(9.2,.28,1.5,0,.14,-1.2,darkConcrete);box(13,.45,1.5,0,9.75,-1.2,darkConcrete);
 box(.16,5.9,.26,-4.64,3.25,-.34,edge);box(.16,5.9,.26,4.64,3.25,-.34,edge);box(9.35,.18,.26,0,6.25,-.34,edge);
 // Gewerbliche Außenfassade: Glasfronten, Fenster, Vordächer und Rammschutz wie im Referenzbild
-const facadeGlass=new THREE.MeshPhysicalMaterial({color:0x203746,metalness:.18,roughness:.12,clearcoat:1,clearcoatRoughness:.08,transparent:true,opacity:.89,side:THREE.DoubleSide});
+const facadeGlass=new THREE.MeshPhysicalMaterial({color:0x203746,metalness:.18,roughness:.12,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.3,side:THREE.DoubleSide});
 const mullion=mat('#151e25',.31,.75);
 for(const x of [-7.1,7.1]){
   box(4.2,2.3,.07,x,5.55,-.36,facadeGlass);
@@ -46,7 +51,7 @@ for(const x of [-3.2,3.2]){
   const p=new THREE.SpotLight(0xffc17d,70,15,Math.PI/5,.75,1.5);p.position.set(x,6.94,.62);p.target.position.set(x,1.6,1.1);scene.add(p,p.target);
 }
 // schmale horizontale Torprofile und sichtbare Unterkante
-box(9.45,.1,.3,0,.36,.55,metal);
+
 const interior=new THREE.Group();scene.add(interior);
 const floor=mat('#55514d');floor.map=texture('#77716a',16);floor.map.repeat.set(2,3);
 const brick=mat('#716058');brick.map=texture('#80675d',21);
@@ -79,15 +84,53 @@ for(const x of [-.89,.89]){box(.48,.21,.08,x,1.58,2.35,light,car);box(.4,.16,.07
 box(2.4,.16,.28,0,.77,2.39,chrome,car);
 const door=new THREE.Group();scene.add(door);door.position.set(0,0,.14);const slat=mat('#34424c',.28,.82);slat.map=texture('#626b70',44);slat.map.repeat.set(3,.15);slat.bumpMap=slat.map;slat.bumpScale=.012;const lip=mat('#131f28',.34,.8);const rail=mat('#1d272e',.4,.7);
 box(.23,6.1,.5,-4.61,3.15,.1,rail);box(.23,6.1,.5,4.61,3.15,.1,rail);box(9.8,.55,.75,0,6.38,.15,edge);box(9.7,.11,.2,0,6.06,.58,metal);
-const slats=[];for(let i=0;i<25;i++){const g=new THREE.Group();door.add(g);const y=.47+i*.225;g.position.y=y;box(9.05,.21,.18,0,0,.04,slat,g);box(9.05,.026,.24,0,-.103,.12,lip,g);box(9.05,.018,.17,0,.095,.145,mat('#6b7980',.32,.75),g);slats.push(g)}
+const slats=[];for(let i=0;i<25;i++){const g=new THREE.Group();door.add(g);const y=.47+i*.225;g.position.y=y;box(9.05,.21,.18,0,0,.04,slat,g);box(9.05,.026,.24,0,-.103,.12,lip,g);box(9.05,.012,.17,0,.095,.145,metal,g);slats.push(g)}
 for(const x of [-6.5,6.5])for(let y=1.1;y<9.3;y+=2.8){box(.025,.025,.025,x,y,-.38,metal)}
 // Betonfugen, Schalungsanker und Fassadendetails
 for(const x of [-7.6,-5.2,5.2,7.6]){box(.025,9.3,.03,x,4.7,-.41,mat('#777974'));for(let y=1.1;y<9;y+=1.65){const pin=new THREE.Mesh(new THREE.CylinderGeometry(.047,.047,.018,12),edge);pin.rotation.x=Math.PI/2;pin.position.set(x+.35,y,-.39);scene.add(pin)}}
 for(const y of [2.1,4.5,7,9.25]){box(16,.024,.025,0,y,-.4,mat('#858780'))}
 for(const x of [-5.55,5.55]){box(.5,.25,.4,x,6.3,.12,edge);const lamp=box(.32,.08,.28,x,6.15,.4,warm);const p=new THREE.PointLight(0xffb66c,22,9,2);p.position.set(x,6,.9);scene.add(p)}
-const mainLamp=new THREE.PointLight(0xffd39a,15,11,2);mainLamp.position.set(0,5.7,-1.4);scene.add(mainLamp);const outdoor=new THREE.DirectionalLight(0x9eb6d7,1.45);outdoor.position.set(-5,11,9);scene.add(outdoor);scene.add(new THREE.HemisphereLight(0x8ca2c2,0x34291f,1.5));
-box(15,.15,2.7,0,-.015,3.2,mat('#62625d'));for(let i=-8;i<=8;i++){box(.015,.014,2.7,i*.9,.07,3.2,mat('#41413f'))}
-let amount=0,goal=0;const btn=document.getElementById('door');btn.onclick=()=>{goal=goal===0?1:0;btn.textContent=goal?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑'};let touching=false,sx=0,sy=0;renderer.domElement.addEventListener('pointerdown',e=>{touching=true;sx=e.clientX;sy=e.clientY});renderer.domElement.addEventListener('pointermove',e=>{if(!touching)return;orbitX=Math.max(-.27,Math.min(.27,orbitX+(e.clientX-sx)*.0014));orbitY=Math.max(-.1,Math.min(.13,orbitY+(e.clientY-sy)*.001));sx=e.clientX;sy=e.clientY});renderer.domElement.addEventListener('pointerup',()=>touching=false);
-function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.fov=w<h?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
-function animate(){requestAnimationFrame(animate);amount+=(goal-amount)*.025;const visible=Math.round(amount*25);slats.forEach((g,i)=>{const lift=amount*5.9;g.position.y=.47+i*.225+Math.min(lift,6.1-(.47+i*.225));g.visible=g.position.y<6.28});document.getElementById('progress').style.width=(amount*100)+'%';const distance=innerWidth<innerHeight?25:24;const entry=Math.max(0,(amount-.65)/.35);camera.position.set(orbitX*12*(1-entry*.65),4.1+orbitY*6,THREE.MathUtils.lerp(distance,-2.2,entry));camera.lookAt(0,THREE.MathUtils.lerp(2.8,2.6,entry),THREE.MathUtils.lerp(0,-8,entry));renderer.render(scene,camera)}animate();
+const mainLamp=new THREE.PointLight(0xffd39a,15,11,2);mainLamp.position.set(0,5.7,-1.4);scene.add(mainLamp);const outdoor=new THREE.DirectionalLight(0x9eb6d7,1.45);outdoor.position.set(-5,11,9);outdoor.intensity=.65;outdoor.castShadow=true;outdoor.shadow.mapSize.set(2048,2048);Object.assign(outdoor.shadow.camera,{left:-17,right:17,top:15,bottom:-15,near:.5,far:50});outdoor.shadow.bias=-.0003;outdoor.shadow.normalBias=.03;outdoor.shadow.camera.updateProjectionMatrix();scene.add(outdoor);scene.add(new THREE.HemisphereLight(0x8ca2c2,0x34291f,.28));
+box(15,.15,2.7,0,-.015,3.2,concrete);for(let i=-8;i<=8;i++){box(.015,.014,2.7,i*.9,.07,3.2,mat('#41413f'))}
+// Downloaded CC0 photographic scans and HDR illumination, served with the site.
+const loader=new THREE.TextureLoader(),anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+async function surface(material,prefix,tint){
+ const names=[prefix+'_diff_1k.jpg',prefix+'_nor_gl_1k.jpg',prefix+'_rough_1k.jpg'];
+ const maps=await Promise.all(names.map(n=>loader.loadAsync('./assets/'+n)));
+ maps.forEach(t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=anisotropy});maps[0].colorSpace=THREE.SRGBColorSpace;
+ material.map=maps[0];material.normalMap=maps[1];material.roughnessMap=maps[2];material.normalScale.set(.65,.65);material.bumpMap=null;material.color.set(tint);material.roughness=1;material.needsUpdate=true;
+}
+const ready=Promise.allSettled([
+ surface(darkConcrete,'concrete_wall_009','#8e9498'),
+ surface(concrete,'concrete_wall_009','#c4c7c6'),
+ surface(asphalt,'asphalt_03','#b2b8c0'),
+ new RGBELoader().loadAsync('./assets/industrial_sunset_puresky_1k.hdr').then(hdr=>{
+  const pmrem=new THREE.PMREMGenerator(renderer),env=pmrem.fromEquirectangular(hdr);
+  scene.environment=env.texture;scene.environmentIntensity=.65;
+  hdr.mapping=THREE.EquirectangularReflectionMapping;scene.background=hdr;scene.backgroundBlurriness=.13;scene.backgroundIntensity=.25;pmrem.dispose();
+ })
+]);
+// A continuous folded-metal section, rather than a flat rectangle for each slat.
+const profile=new THREE.Shape();profile.moveTo(-.102,-.065);profile.lineTo(-.102,.045);profile.quadraticCurveTo(-.075,.105,0,.11);profile.quadraticCurveTo(.075,.105,.102,.045);profile.lineTo(.102,-.065);profile.closePath();
+const section=new THREE.ExtrudeGeometry(profile,{depth:9.05,bevelEnabled:false,steps:1});
+section.rotateY(Math.PI/2);section.computeBoundingBox();section.center();
+slats.forEach(g=>{while(g.children.length)g.remove(g.children[0]);const mesh=new THREE.Mesh(section,slat);mesh.castShadow=mesh.receiveShadow=true;g.add(mesh)});
+const bottomRail=box(9.05,.09,.21,0,.34,.18,edge,door);
+const grip=box(.65,.055,.07,0,.49,.3,metal,door);
+let amount=0,goal=0,last=performance.now(),touching=false,sx=0,sy=0,dragGate=false;
+const btn=document.getElementById('door'),help=document.getElementById('help');
+function setGoal(value){goal=value;btn.textContent=value?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑';btn.setAttribute('aria-expanded',String(!!value))}
+btn.onclick=()=>setGoal(goal===0?1:0);
+help.textContent='Materialien werden geladen …';
+ready.then(results=>{const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Tor hochziehen · Zum Umschauen seitlich wischen';window.garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
+renderer.domElement.addEventListener('pointerdown',e=>{touching=true;sx=e.clientX;sy=e.clientY;dragGate=false;renderer.domElement.setPointerCapture(e.pointerId)});
+renderer.domElement.addEventListener('pointermove',e=>{if(!touching)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dy)>Math.abs(dx)*1.4&&Math.abs(dy)>2&&e.clientX>innerWidth*.25&&e.clientX<innerWidth*.75)dragGate=true;if(dragGate){amount=THREE.MathUtils.clamp(amount-dy/innerHeight*1.7,0,1);goal=amount}else{orbitX=THREE.MathUtils.clamp(orbitX+dx*.0014,-.27,.27);orbitY=THREE.MathUtils.clamp(orbitY+dy*.001,-.1,.13)}sx=e.clientX;sy=e.clientY});
+function release(){if(dragGate)setGoal(amount>.4?1:0);touching=false;dragGate=false}
+renderer.domElement.addEventListener('pointerup',release);renderer.domElement.addEventListener('pointercancel',release);
+function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
+function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-last)/1000,.05);last=now;if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
+ slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
+ bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
+ document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);camera.position.set(orbitX*12*(1-entry*.65),4.1+orbitY*6,THREE.MathUtils.lerp(distance,-2.2,entry));camera.lookAt(0,THREE.MathUtils.lerp(2.8,2.6,entry),THREE.MathUtils.lerp(0,-8,entry));renderer.render(scene,camera)
+}requestAnimationFrame(animate);
 </script></body></html>
