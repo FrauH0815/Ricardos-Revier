@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x101923);scene.fog=new THREE.FogExp2(0x101923,.008);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.72;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,100);const target=new THREE.Vector3(0,2.8,0);let orbitX=0,orbitY=0;
 const mat=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 function texture(base,seed=1){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,512,512);let v=seed;const rnd=()=>{v=(v*1664525+1013904223)>>>0;return v/4294967296};for(let i=0;i<25000;i++){const n=Math.floor(rnd()*255);x.fillStyle='rgba('+n+','+n+','+n+','+(rnd()*.055)+')';x.fillRect(rnd()*512,rnd()*512,rnd()*3+1,rnd()*3+1)}for(let i=0;i<65;i++){x.fillStyle='rgba(35,35,35,'+(rnd()*.13)+')';x.beginPath();x.arc(rnd()*512,rnd()*512,rnd()*3.5,0,Math.PI*2);x.fill()}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t}
@@ -57,10 +57,10 @@ const floor=mat('#c1beb8',.96,.02);
 const brick=mat('#d8d8d5',.97,.01);
 box(22,.2,25,0,.08,-12.4,floor,interior);box(22,7.3,.18,0,3.75,-24.9,brick,interior);
 box(.18,7.3,25,-10.95,3.75,-12.4,brick,interior);box(.18,7.3,25,10.95,3.75,-12.4,brick,interior);
-box(22,.18,25,0,7.44,-12.4,mat('#999b99',.95),interior);
+const ceiling=mat('#777d7e',.94,.08);box(22,.18,25,0,7.44,-12.4,ceiling,interior);
 const beam=mat('#252a2c',.52,.68),wood=mat('#6b4934',.7),leather=mat('#483126',.85),chrome=mat('#969a9b',.25,.85);
 for(const z of [-2,-7,-12,-17,-22]){box(21.8,.3,.3,0,7.15,z,beam,interior);for(const x of [-10.8,10.8])box(.18,7,.22,x,3.6,z,beam,interior)}
-for(const z of [-5.2,-9.3,-13,-17.5]){const l=box(2.4,.055,.45,0,7.05,z,new THREE.MeshStandardMaterial({color:0xffe6bd,emissive:0xffb85f,emissiveIntensity:1.8}),interior);const p=new THREE.PointLight(0xffdfbd,75,17,2);p.position.set(0,6.8,z);interior.add(p)}
+for(const z of [-5.2,-9.3,-13,-17.5]){const l=box(2.4,.055,.45,0,7.05,z,new THREE.MeshStandardMaterial({color:0xffe6bd,emissive:0xffb85f,emissiveIntensity:.28}),interior);const p=new THREE.PointLight(0xffdfbd,16,12,2);p.position.set(0,6.8,z);interior.add(p)}
 // Long detailed workshop benches inspired by the supplied reference photo.
 const cabinet=mat('#54717a',.42,.55),cabinetDark=mat('#2b424a',.55,.55),steelTop=mat('#a3a9a7',.38,.7),pegboard=mat('#555f60',.86,.3);
 function workshopBench(x,z,length=5.7){
@@ -124,7 +124,7 @@ for(const x of [-.89,.89]){box(.48,.21,.08,x,1.58,2.35,light,car);box(.4,.16,.07
 box(2.4,.16,.28,0,.77,2.39,chrome,car);
 
 // Broad clear central aisle; quiet industrial details at human scale.
-const ledMat=new THREE.MeshStandardMaterial({color:0xf6faff,emissive:0xdceeff,emissiveIntensity:4});
+const ledMat=new THREE.MeshStandardMaterial({color:0xf6faff,emissive:0xdceeff,emissiveIntensity:1.4});
 function rod(a,b,r,m,parent=interior){const delta=new THREE.Vector3().subVectors(b,a);const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,delta.length(),8),m);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());parent.add(mesh);return mesh}
 const hexEdges=new Set();
 for(let row=0;row<3;row++)for(let col=0;col<4;col++){
@@ -135,7 +135,7 @@ for(let row=0;row<3;row++)for(let col=0;col<4;col++){
  if(!hexEdges.has(key)){hexEdges.add(key);rod(p,q,.028,ledMat)}
  }
 }
-const vehicleLight=new THREE.SpotLight(0xe3efff,480,20,.78,.65,2);
+const vehicleLight=new THREE.SpotLight(0xe3efff,95,16,.78,.75,2);
 vehicleLight.position.set(-5.2,6.8,-5.5);vehicleLight.target.position.set(-5.2,0,-5.5);vehicleLight.castShadow=true;vehicleLight.shadow.mapSize.set(1024,1024);interior.add(vehicleLight,vehicleLight.target);
 // Plain workshop walls, no windows; exposed heating pipes and aged concrete.
 const pipe=mat('#737a7a',.46,.65),rust=mat('#755d4c',.93,.2);
@@ -147,22 +147,22 @@ for(const x of [-10.65,10.65]){
  }
 }
 // Concrete patches, faint stains, and subtle floor wear.
-const grime=mat('#777570',.99);
+const grime=new THREE.MeshStandardMaterial({color:0x6d6a64,transparent:true,opacity:.12,roughness:1,depthWrite:false});
 for(let i=0;i<34;i++){
  const x=-9.3+(i*7.19%18.6),z=-2.5-(i*5.67%21);
- const patch=box(.22+(i%5)*.23,.006,.15+(i%4)*.22,x,.191,z,grime,interior);
+ const patch=box(.22+(i%5)*.23,.001,.15+(i%4)*.22,x,.188,z,grime,interior);patch.castShadow=false;
  patch.rotation.y=(i%7)*.33;
 }
-for(let z=-2;z>-24;z-=2)box(21.7,.006,.015,0,.186,z,mat('#494a48'),interior);
-for(const x of [-8,-4,0,4,8])box(.014,.006,24,x,.186,-12.3,mat('#494a48'),interior);
+for(let z=-2;z>-24;z-=4)box(21.7,.003,.009,0,.187,z,mat('#6a6966'),interior);
+for(const x of [-8,-4,0,4,8])box(.009,.003,24,x,.187,-12.3,mat('#6a6966'),interior);
 // Sofa cushions and seams soften the previous block geometry.
 for(const x of [-5.98,-4.8,-3.62]){
  box(1.1,.17,.91,x,.82,-17.55,mat('#674638',.93),interior);
  const cushion=box(1.08,.58,.23,x,1.23,-17.9,mat('#624032',.95),interior);cushion.rotation.x=-.12;
 }
 for(const x of [-6.25,-3.3]){const pillow=box(.5,.48,.18,x,1.12,-17.7,mat('#b5a28d',1),interior);pillow.rotation.z=x<-5?.22:-.22}
-const loungeLight=new THREE.PointLight(0xffc58b,85,12,2);loungeLight.position.set(-5,4.7,-17);interior.add(loungeLight);
-const barLight=new THREE.PointLight(0xffcf9a,95,12,2);barLight.position.set(5.5,4.8,-15.3);interior.add(barLight);
+const loungeLight=new THREE.PointLight(0xffc58b,20,10,2);loungeLight.position.set(-5,4.7,-17);interior.add(loungeLight);
+const barLight=new THREE.PointLight(0xffcf9a,20,10,2);barLight.position.set(5.5,4.8,-15.3);interior.add(barLight);
 // Pendant shades and warm pools above the two-seat private bar.
 for(const x of [4.7,6.3]){rod(new THREE.Vector3(x,7.2,-15.3),new THREE.Vector3(x,4.1,-15.3),.018,beam);const shade=new THREE.Mesh(new THREE.ConeGeometry(.34,.24,24,1,true),beam);shade.position.set(x,4,-15.3);interior.add(shade);box(.35,.025,.3,x,3.88,-15.3,ledMat,interior)}
 // Rear utility zone and side room entrance have their own visible wall plane.
@@ -203,7 +203,8 @@ async function applyWorkshopPBR(material,base,repeatX,repeatY,tint){
 }
 const workshopMaterials=Promise.allSettled([
  applyWorkshopPBR(floor,'concrete_floor_02',5,7,'#b4b0aa'),
- applyWorkshopPBR(brick,'painted_plaster_wall',4,2,'#d5d5d2')
+ applyWorkshopPBR(brick,'painted_plaster_wall',4,2,'#d5d5d2'),
+ applyWorkshopPBR(ceiling,'concrete_wall_009',3,3,'#a5a5a3')
 ]);
 // Downloaded CC0 photographic scans and HDR illumination, served with the site.
 const loader=new THREE.TextureLoader(),anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
