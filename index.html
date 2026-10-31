@@ -53,11 +53,11 @@ for(const x of [-3.2,3.2]){
 // schmale horizontale Torprofile und sichtbare Unterkante
 
 const interior=new THREE.Group();scene.add(interior);
-const floor=mat('#55514d');floor.map=texture('#77716a',16);floor.map.repeat.set(2,3);
-const brick=mat('#716058');brick.map=texture('#80675d',21);
+const floor=mat('#77736e',.98,.02);floor.map=texture('#898680',16);floor.map.repeat.set(5,7);floor.bumpMap=floor.map;floor.bumpScale=.065;
+const brick=mat('#b1b0ab',.96,.02);brick.map=texture('#b8b8b3',21);brick.map.repeat.set(4,3);brick.bumpMap=brick.map;brick.bumpScale=.028;
 box(22,.2,25,0,.08,-12.4,floor,interior);box(22,7.3,.18,0,3.75,-24.9,brick,interior);
 box(.18,7.3,25,-10.95,3.75,-12.4,brick,interior);box(.18,7.3,25,10.95,3.75,-12.4,brick,interior);
-box(22,.18,25,0,7.44,-12.4,mat('#35393b'),interior);
+box(22,.18,25,0,7.44,-12.4,mat('#999b99',.95),interior);
 const beam=mat('#252a2c',.52,.68),wood=mat('#6b4934',.7),leather=mat('#483126',.85),chrome=mat('#969a9b',.25,.85);
 for(const z of [-2,-7,-12,-17,-22]){box(21.8,.3,.3,0,7.15,z,beam,interior);for(const x of [-10.8,10.8])box(.18,7,.22,x,3.6,z,beam,interior)}
 for(const z of [-5.2,-9.3,-13,-17.5]){const l=box(2.4,.055,.45,0,7.05,z,new THREE.MeshStandardMaterial({color:0xffe6bd,emissive:0xffb85f,emissiveIntensity:1.8}),interior);const p=new THREE.PointLight(0xffdfbd,75,17,2);p.position.set(0,6.8,z);interior.add(p)}
@@ -118,10 +118,21 @@ for(let row=0;row<3;row++)for(let col=0;col<4;col++){
 }
 const vehicleLight=new THREE.SpotLight(0xe3efff,480,20,.78,.65,2);
 vehicleLight.position.set(-5.2,6.8,-5.5);vehicleLight.target.position.set(-5.2,0,-5.5);vehicleLight.castShadow=true;vehicleLight.shadow.mapSize.set(1024,1024);interior.add(vehicleLight,vehicleLight.target);
-// Window bands bring depth and softer daylight into the spacious hall.
-for(const z of [-6,-12,-18,-23]){
- box(.08,1.45,3.8,-10.82,5.35,z,new THREE.MeshStandardMaterial({color:0x8094a0,emissive:0x65849b,emissiveIntensity:.45,roughness:.22}),interior);
- for(const dz of [-1.9,0,1.9])box(.12,1.6,.055,-10.74,5.35,z+dz,beam,interior);
+// Plain workshop walls, no windows; exposed heating pipes and aged concrete.
+const pipe=mat('#737a7a',.46,.65),rust=mat('#755d4c',.93,.2);
+for(const x of [-10.65,10.65]){
+ for(const y of [2.1,2.34])rod(new THREE.Vector3(x,y,-2),new THREE.Vector3(x,y,-23.8),.055,pipe);
+ for(const z of [-5,-11,-17,-22]){
+  rod(new THREE.Vector3(x,2.1,z),new THREE.Vector3(x,2.34,z),.045,rust);
+  box(.25,.32,.1,x,2.2,z,mat('#777a77'),interior);
+ }
+}
+// Concrete patches, faint stains, and subtle floor wear.
+const grime=mat('#777570',.99);
+for(let i=0;i<34;i++){
+ const x=-9.3+(i*7.19%18.6),z=-2.5-(i*5.67%21);
+ const patch=box(.22+(i%5)*.23,.006,.15+(i%4)*.22,x,.191,z,grime,interior);
+ patch.rotation.y=(i%7)*.33;
 }
 for(let z=-2;z>-24;z-=2)box(21.7,.006,.015,0,.186,z,mat('#494a48'),interior);
 for(const x of [-8,-4,0,4,8])box(.014,.006,24,x,.186,-12.3,mat('#494a48'),interior);
