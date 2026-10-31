@@ -56,7 +56,25 @@ for(const x of [-3.2,3.2]){
 
 const interior=new THREE.Group();scene.add(interior);
 const floor=mat('#b7b7b2',.92,0);floor.userData.worldScale=4;
-const brick=mat('#dadbd8',.95,0);brick.userData.worldScale=3;
+const brick=mat('#b4b5af',.97,0);brick.userData.worldScale=4;
+// Subtle mineral plaster: mottling, hairline cracks, casting joints and aged wall patina.
+function wallTexture(){
+ const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');
+ let seed=19381;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ g.fillStyle='#b9bab5';g.fillRect(0,0,1024,1024);
+ for(let scale of [180,85,30,9]){
+   for(let i=0;i<scale*scale/2;i++){const x=rnd()*1024,y=rnd()*1024,r=3+rnd()*1024/scale;
+    g.fillStyle=rnd()>.45?'rgba(38,40,37,.018)':'rgba(255,255,250,.022)';
+    g.beginPath();g.ellipse(x,y,r,r*(.3+rnd()),rnd()*3,0,Math.PI*2);g.fill();
+   }
+ }
+ for(let i=0;i<21000;i++){const x=rnd()*1024,y=rnd()*1024;g.fillStyle=rnd()>.5?'rgba(30,35,32,.035)':'rgba(245,246,239,.045)';g.fillRect(x,y,1+rnd()*3,1+rnd()*3)}
+ // Faint horizontal formwork joints, irregular and worn rather than tiled squares.
+ for(let y=0;y<1024;y+=256){g.strokeStyle='rgba(48,49,47,.17)';g.lineWidth=1.5;g.beginPath();for(let x=0;x<=1024;x+=20){const yy=y+(rnd()-.5)*2;if(x===0)g.moveTo(x,yy);else g.lineTo(x,yy)}g.stroke()}
+ for(let i=0;i<22;i++){let x=rnd()*1024,y=rnd()*1024;g.strokeStyle='rgba(63,65,61,.08)';g.lineWidth=.7;g.beginPath();g.moveTo(x,y);for(let j=0;j<6;j++){x+=rnd()*20-10;y+=rnd()*35;g.lineTo(x,y)}g.stroke()}
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
+}
+const wallScan=wallTexture();brick.map=wallScan;brick.bumpMap=wallScan;brick.bumpScale=.018;brick.color.set('#deded9');
 box(22,.2,25,0,.08,-12.4,floor,interior);box(22,7.3,.18,0,3.75,-24.9,brick,interior);
 box(.18,7.3,25,-10.95,3.75,-12.4,brick,interior);box(.18,7.3,25,10.95,3.75,-12.4,brick,interior);
 const ceiling=mat('#868b89',.97,0);ceiling.userData.worldScale=4;box(22,.18,25,0,7.44,-12.4,ceiling,interior);
@@ -200,7 +218,7 @@ async function applyWorkshopPBR(material,base,repeatX,repeatY,tint){
 }
 const workshopMaterials=Promise.allSettled([
  applyWorkshopPBR(floor,'concrete_floor_02',1,1,'#c5c7c3'),
- applyWorkshopPBR(brick,'painted_plaster_wall',1,1,'#e0e2df'),
+ Promise.resolve(), // Keep the purpose-made aged mineral wall instead of replacing it with smooth plaster.
  applyWorkshopPBR(ceiling,'concrete_wall_009',1,1,'#929794')
 ]);
 // Downloaded CC0 photographic scans and HDR illumination, served with the site.
