@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#132d26"><title>Poker am Tresen · Ricardos Revier</title><link rel="stylesheet" href="poker.css"></head>
+<body>
+<header><a class="back" href="../index.html" aria-label="Zurück zur Werkstatt">‹</a><div class="brand"><small>RICARDOS REVIER</small><strong>Poker am Tresen</strong></div><button id="menuButton" class="quiet">☰ Tisch</button></header>
+<main id="game" hidden>
+ <div class="meta"><span id="handCount"></span><span>NO LIMIT · 10 / 20</span><span id="record"></span></div>
+ <section class="counter" aria-label="Pokertisch">
+  <div id="opponents" class="opponents"></div>
+  <div class="center"><span class="etched">FEIERABEND. KARTEN AUF DEN TRESEN.</span><div id="pot" class="pot"></div><div id="board" class="cards board" aria-label="Gemeinschaftskarten"></div><div id="street" class="street"></div></div>
+  <div id="hero" class="hero"></div>
+ </section>
+ <section id="status" class="status" aria-live="polite"></section>
+ <section id="controls" class="controls" aria-label="Spielaktionen"></section>
+ <details class="history"><summary>Handverlauf & Regeln</summary><p>Zwei eigene Karten, fünf Gemeinschaftskarten. Die besten fünf Karten zählen. 10 / 20 Blinds; setzen vor dem Flop, nach Flop, Turn und River. Bei All-in werden Haupt- und Nebenpots getrennt verteilt.</p><ol id="log"></ol><p>Nur Spielchips. Die Partie wird automatisch in diesem Browser gespeichert.</p></details>
+</main>
+<section id="menu" class="menu"><div class="menuCard">
+ <span class="eyebrow">DEIN PLATZ IST NOCH FREI</span><div class="suits">♠ <span>♥</span> ♣ <span>♦</span></div><h1>Poker am Tresen</h1><p class="intro">Texas Hold’em. Du gegen die Jungs.<br>Ein guter Bluff gehört zum Feierabend.</p>
+ <button id="resume" class="gold" hidden>Partie fortsetzen</button>
+ <fieldset><legend>Wie viele Computergegner?</legend><div class="choices" id="opponentChoices"><button data-n="2" aria-pressed="true">2 <small>Gegner</small></button><button data-n="3" aria-pressed="false">3 <small>Gegner</small></button><button data-n="4" aria-pressed="false">4 <small>Gegner</small></button></div></fieldset>
+ <fieldset><legend>Wie lange bleiben wir sitzen?</legend><div class="choices rounds" id="roundChoices"><button data-n="5" aria-pressed="true">5 Hände</button><button data-n="10" aria-pressed="false">10 Hände</button><button data-n="0" aria-pressed="false">Ohne Limit</button></div></fieldset>
+ <p class="setup">1.000 Chips pro Person · Blinds 10 / 20<br>Nach der letzten Hand kannst du einfach weiterspielen.</p>
+ <button id="start" class="gold">Karten auf den Tresen</button><p id="resetNote" class="fine" hidden>Ein neuer Tisch ersetzt die gespeicherte Partie. Dein Rekord bleibt erhalten.</p><p class="fine">Spielgeld · Speicherung nur in diesem Browser</p>
+</div></section>
+<script type="module" src="poker.js"></script></body></html>

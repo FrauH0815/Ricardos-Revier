@@ -11,6 +11,7 @@
 <div id="gamePick"><div class="panel"><h2>SPIELE</h2>
 <button class="g" data-g="angeln"><b>🎣 Angeln</b><small>Dorfteich, großer See, Fluss am Abend</small></button>
 <button class="g" data-g="kegeln"><b>🎳 Kegeln</b><small>Übungsbahn bis Meisterschaft</small></button>
+<button class="g" data-g="poker"><b>🃏 Poker am Tresen</b><small>Hold’em gegen 2, 3 oder 4 Computergegner</small></button>
 <button class="g" data-g="jagd"><b>🎯 Jagd</b><small>Schießstand, Lichtung, Dämmerung, Nebel</small></button>
 <button class="x" id="pickClose">Zurück in die Werkstatt</button></div></div>
 <div id="gameFrame"><button class="close" id="frameClose">✕ ZURÜCK</button><iframe title="Spiel" allow="autoplay; vibrate"></iframe></div><div id="credits" style="position:fixed;right:8px;bottom:5px;font-size:8px;opacity:.45;pointer-events:none">RAM: maregajavier · Sofa: Darmstadt Graphics Group · CC BY 4.0</div>
@@ -249,7 +250,12 @@ for(let r=0;r<2;r++)for(let i=0;i<5;i++){const c=new THREE.Mesh(new THREE.Cylind
 // Bar counter (Tresen) jutting out from the right wall, stools on the room side.
 box(3.4,1.0,.5,8.5,.68,-18.25,oak,interior);
 for(let i=0;i<22;i++)box(.1,.95,.03,6.95+i*.148,.66,-17.99,mat(i%2?'#6e4529':'#7d5232',.6),interior);
-box(3.6,.07,.85,8.45,1.21,-18.15,oak,interior);
+const pokerCounter=box(3.6,.07,.85,8.45,1.21,-18.15,oak,interior);
+// Cards and chips make the counter a discoverable poker table.
+const pokerSet=new THREE.Group();pokerSet.position.set(8.45,1.255,-18.15);interior.add(pokerSet);
+{const c=document.createElement("canvas");c.width=512;c.height=160;const g=c.getContext("2d");g.fillStyle="#14392b";g.fillRect(0,0,512,160);g.strokeStyle="#d8b779";g.lineWidth=5;g.strokeRect(8,8,496,144);g.textAlign="center";g.fillStyle="#edd7a6";g.font="800 45px Georgia";g.fillText("POKER AM TRESEN",256,70);g.font="25px system-ui";g.fillText("♠  Antippen & mitspielen  ♥",256,118);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const m=new THREE.MeshBasicMaterial({map:t});const label=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.5),m);label.rotation.x=-Math.PI/2;label.position.set(0,.012,-.04);pokerSet.add(label);}
+for(let i=0;i<2;i++){const card=box(.23,.009,.34,-1.1+i*.15,.012+i*.014,.04,mat("#f4eee0",.55),pokerSet);card.rotation.y=(i-.5)*.3;}
+for(let i=0;i<3;i++)for(let j=0;j<4;j++){const chip=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.018,24),mat(["#ad3c32","#d8bc76","#244a78"][i],.4));chip.position.set(.95+i*.18,.02+j*.019,.02);pokerSet.add(chip);}
 box(3.4,.05,.3,8.5,1.02,-18.55,stone,interior);
 window.barStools=[];
 for(const x of [7.2,8.35,9.5]){
@@ -813,7 +819,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
 // A short tap on the TV (from up to 12 m away) opens the game picker.
 const tapRay=new THREE.Raycaster();tapRay.far=12;
 // Tappable things: the TV in the garage, and wheel, date box, mailbox, album in the Barbie room.
-const tapTargets=[[tvGroup,'games'],[openDoor,'door'],...roomTaps];
+const tapTargets=[[pokerCounter,'poker'],[pokerSet,'poker'],[tvGroup,'games'],[openDoor,'door'],...roomTaps];
 function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
  tapRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
  let best=null;for(const [obj,what] of tapTargets){const h=tapRay.intersectObject(obj,true)[0];if(h&&(!best||h.distance<best.d))best={d:h.distance,what}}
@@ -822,7 +828,8 @@ function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
  return best&&best.what}
 const datesUI=import('./dates/dates.js');
 function openThing(what){touchWalk=0;strafeTouch=0;
- if(what==='games')gamePick.classList.add('on');
+ if(what==='poker'){gameFrame.querySelector('iframe').src='games/poker.html';gameFrame.classList.add('on')}
+ else if(what==='games')gamePick.classList.add('on');
  else if(what==='door')toggleDoor();
  else if(what==='car')detail?.enter();
  else datesUI.then(m=>({wheel:m.openDateBox,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
