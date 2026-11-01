@@ -1,507 +1,905 @@
 {
- "hinweis": "Hier stehen alle Date-Ideen. Felder: id (eindeutig), titel, text. Neue Ideen einfach hinten anfügen.",
- "zwei": [
+ "hinweis": "Alle 100 Date-Ideen für den Date-Generator. kosten = Gesamtkosten für alle Teilnehmenden (0, 10 oder 20 €). dauer: kurz bis 1 Std., mittel 1–3 Std., lang länger.",
+ "dates": [
   {
-   "id": "z01",
+   "id": "p01",
    "titel": "Picknick bei Sonnenuntergang",
-   "text": "Decke, Lieblingssnacks und ein Platz mit Aussicht."
+   "text": "Decke, Lieblingssnacks und ein Platz mit Aussicht.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z02",
+   "id": "p02",
    "titel": "Kochabend mit neuem Rezept",
-   "text": "Ein Gericht, das keiner von euch je gekocht hat."
+   "text": "Ein Gericht, das keiner von euch je gekocht hat.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z03",
+   "id": "p03",
    "titel": "Sterne gucken",
-   "text": "Decke, Tee, Sternbilder-App und Kuscheln."
+   "text": "Decke in den Garten, Tee, eine Sternbilder-App und Kuscheln.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z04",
+   "id": "p04",
    "titel": "Kinoabend zu Hause",
-   "text": "Mit Popcorn-Bar und Film, den der andere aussucht."
+   "text": "Mit Popcorn-Bar und einem Film, den der andere aussucht.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z05",
+   "id": "p05",
    "titel": "Frühstück im Bett",
-   "text": "Einer macht's, der andere bleibt liegen. Nächstes Mal tauschen."
+   "text": "Einer macht's, der andere bleibt liegen. Nächstes Mal wird getauscht.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z06",
-   "titel": "Thermentag",
-   "text": "Einen ganzen Tag Wellness und Sauna."
+   "id": "p06",
+   "titel": "Kaffee und Kuchen im Garten",
+   "text": "Zusammen einen Kuchen backen und ihn draußen in Ruhe genießen.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z07",
+   "id": "p07",
    "titel": "Roadtrip ohne Ziel",
-   "text": "Ins Auto setzen, Münze werfen an jeder Kreuzung."
+   "text": "Ins Auto setzen und an jeder Kreuzung eine Münze werfen, höchstens 30 km weit.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "z08",
+   "id": "p08",
    "titel": "Tanzabend im Wohnzimmer",
-   "text": "Eure Hochzeitslieder und alles, was dazu passt."
+   "text": "Eure Hochzeitslieder und alles, was dazu passt. Mindestens fünf Songs tanzen.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z09",
-   "titel": "Brunch im Lieblingscafé",
-   "text": "Ganz ohne Zeitdruck."
+   "id": "p09",
+   "titel": "Brunch zu Hause",
+   "text": "Rührei, frische Brötchen, Obst und Saft, ganz ohne Zeitdruck.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z10",
+   "id": "p10",
    "titel": "Zusammen ein Bild malen",
-   "text": "Eine Leinwand, jeder malt eine Hälfte."
+   "text": "Eine Leinwand, jeder malt eine Hälfte.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z11",
-   "titel": "Verkostungsabend",
-   "text": "Wein, Bier oder Schokolade blind probieren."
+   "id": "p11",
+   "titel": "Saft- oder Weinverkostung",
+   "text": "Drei Sorten blind probieren und raten, was was ist.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z12",
+   "id": "p12",
    "titel": "Lagerfeuer mit Stockbrot",
-   "text": "Dazu Musik und eine Decke."
+   "text": "Feuerschale im Garten, Musik und eine Decke.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z13",
-   "titel": "Escape Room",
-   "text": "Zeigt, wie gut ihr als Team seid."
+   "id": "p13",
+   "titel": "Rätselabend",
+   "text": "Ein Exit-Spiel für zu Hause lösen, wie ein Escape Room im Wohnzimmer.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z14",
+   "id": "p14",
    "titel": "Bowling",
-   "text": "Verlierer zahlt das Essen danach."
+   "text": "Ein bis zwei Spiele, der Verlierer räumt danach die Küche auf.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z15",
+   "id": "p15",
    "titel": "Minigolf",
-   "text": "Mit kleinem Wetteinsatz."
+   "text": "Mit kleinem Wetteinsatz.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z16",
+   "id": "p16",
    "titel": "Massageabend",
-   "text": "Gegenseitig, mit Öl und Kerzen."
+   "text": "Gegenseitig, mit Öl, Kerzen und ruhiger Musik.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z17",
+   "id": "p17",
    "titel": "Fotoshooting zu zweit",
-   "text": "Irgendwo Schönes, mit Selbstauslöser."
+   "text": "Irgendwo Schönes in der Nähe, mit Selbstauslöser.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z18",
+   "id": "p18",
    "titel": "Wanderung mit Picknick",
-   "text": "Eine Strecke, die ihr noch nicht kennt."
+   "text": "Eine Strecke, die ihr noch nicht kennt, Proviant im Rucksack.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "z19",
+   "id": "p19",
    "titel": "Erinnerungsabend",
-   "text": "Alte Fotos und Videos von euch anschauen."
+   "text": "Alte Fotos und Videos von euch anschauen und erzählen.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z20",
+   "id": "p20",
    "titel": "Karaokeabend",
-   "text": "Mindestens ein Duett ist Pflicht."
+   "text": "Karaoke-Videos auf YouTube. Mindestens ein Duett ist Pflicht.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z21",
+   "id": "p21",
    "titel": "Raclette oder Fondue zu zweit",
-   "text": "Ganz in Ruhe, mit Kerzen."
+   "text": "Ganz in Ruhe, mit Kerzen.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z22",
-   "titel": "Freizeitpark",
-   "text": "Achterbahn und Zuckerwatte."
+   "id": "p22",
+   "titel": "Rummel oder Stadtfest",
+   "text": "Mit 20 € für Zuckerwatte und ein Fahrgeschäft.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z23",
-   "titel": "Schlittschuhlaufen",
-   "text": "Händchenhalten erlaubt, Festhalten auch."
+   "id": "p23",
+   "titel": "Winterspaziergang mit heißem Kakao",
+   "text": "Thermoskanne mitnehmen und eine Runde durch den Schnee oder Frost.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z24",
-   "titel": "Tretboot oder Bootstour",
-   "text": "Auf einem See in der Nähe."
+   "id": "p24",
+   "titel": "Tretboot fahren",
+   "text": "Eine halbe Stunde auf einem See in der Nähe.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z25",
-   "titel": "Kochkurs",
-   "text": "Zusammen etwas Neues lernen."
+   "id": "p25",
+   "titel": "Profi-Rezept nachkochen",
+   "text": "Ein Kochvideo aussuchen und Schritt für Schritt nachkochen.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z26",
-   "titel": "Konzert oder Comedy-Show",
-   "text": "Tickets für etwas, das euch beiden gefällt."
+   "id": "p26",
+   "titel": "Comedy-Abend zu Hause",
+   "text": "Ein Comedy-Programm oder Konzertmitschnitt auf dem großen Bildschirm, mit Snacks.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z27",
+   "id": "p27",
    "titel": "Spieleabend mit Einsatz",
-   "text": "Wer verliert, erfüllt einen Wunsch."
+   "text": "Brett- oder Kartenspiel. Wer verliert, erfüllt einen Wunsch.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z28",
+   "id": "p28",
    "titel": "Sonnenaufgang anschauen",
-   "text": "Früh raus, Kaffee in der Thermoskanne."
+   "text": "Früh raus, Kaffee in der Thermoskanne.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "kurz"
   },
   {
-   "id": "z29",
-   "titel": "Eine Nacht im Hotel",
-   "text": "Gar nicht weit weg, einfach mal raus."
+   "id": "p29",
+   "titel": "Hotelabend zu Hause",
+   "text": "Bett frisch beziehen, Handtuch-Schwäne falten und Zimmerservice spielen.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "z30",
+   "id": "p30",
    "titel": "Eine Nacht im Wohnwagen",
-   "text": "Mit Lichterkette und Gaskocher."
+   "text": "Mit Lichterkette, Gaskocher und Decken.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "z31",
+   "id": "p31",
    "titel": "Flohmarkt-Challenge",
-   "text": "Jeder kauft dem anderen etwas für höchstens 10 €."
+   "text": "Jeder kauft dem anderen etwas für höchstens 5 €.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z32",
+   "id": "p32",
    "titel": "Outfits füreinander aussuchen",
-   "text": "Und so dann ausgehen."
+   "text": "Jeder stylt den anderen aus dem eigenen Kleiderschrank, dann ein Foto.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z33",
+   "id": "p33",
    "titel": "Burgerabend",
-   "text": "Alles selbst gemacht, vom Patty bis zur Soße."
+   "text": "Alles selbst gemacht, vom Patty bis zur Soße.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z34",
+   "id": "p34",
    "titel": "Fahrradtour mit Eisstopp",
-   "text": "Das Eis ist das Ziel."
+   "text": "Das Eis ist das Ziel.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z35",
-   "titel": "Zoo oder Wildpark",
-   "text": "Jeder sucht sein Lieblingstier."
+   "id": "p35",
+   "titel": "Tierpark oder Wildpark",
+   "text": "Ein Park mit günstigem Eintritt. Jeder sucht sein Lieblingstier.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "z36",
+   "id": "p36",
    "titel": "Liebesbriefe",
-   "text": "Schreiben und euch gegenseitig vorlesen."
+   "text": "Schreiben und euch gegenseitig vorlesen.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z37",
+   "id": "p37",
    "titel": "Museum oder Ausstellung",
-   "text": "Etwas, wo ihr noch nie wart."
+   "text": "Eines mit höchstens 10 € Eintritt pro Person, wo ihr noch nie wart.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z38",
+   "id": "p38",
    "titel": "Pizza mit Aussicht",
-   "text": "Zum Mitnehmen holen und im Auto an einem schönen Ort essen."
+   "text": "Pizza holen und im Auto an einem schönen Ort essen.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z39",
+   "id": "p39",
    "titel": "Wellnessabend zu Hause",
-   "text": "Badewanne, Gesichtsmasken, Lieblingsmusik."
+   "text": "Fußbad, Gesichtsmasken, Lieblingsmusik.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z40",
+   "id": "p40",
    "titel": "Zeichenabend",
-   "text": "Ihr zeichnet euch gegenseitig."
+   "text": "Ihr zeichnet euch gegenseitig, ohne Radiergummi.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z41",
+   "id": "p41",
    "titel": "Cocktailabend",
-   "text": "Eigene Drinks erfinden und benennen."
+   "text": "Eigene Drinks erfinden und benennen, gern auch alkoholfrei.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z42",
-   "titel": "Autokino",
-   "text": "Mit Snacks und Decke im Auto."
+   "id": "p42",
+   "titel": "Autokino in der Halle",
+   "text": "Laptop aufs Armaturenbrett, Decken und Popcorn ins Auto.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z43",
-   "titel": "Kartbahn",
-   "text": "Wer ist schneller?"
+   "id": "p43",
+   "titel": "Abendspaziergang mit Taschenlampe",
+   "text": "Im Dunkeln durch den Ort oder am Waldrand entlang.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "kurz"
   },
   {
-   "id": "z44",
-   "titel": "Kletterwald",
-   "text": "Ein bisschen Nervenkitzel zu zweit."
+   "id": "p44",
+   "titel": "Geocaching-Runde",
+   "text": "Mit der kostenlosen App einen Schatz in der Nähe suchen.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z45",
-   "titel": "Mitternachtssauna",
-   "text": "Oder ein Abendschwimmen."
+   "id": "p45",
+   "titel": "Badewannen-Date",
+   "text": "Kerzen, Musik und ein Getränk für jeden.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z46",
+   "id": "p46",
    "titel": "Weihnachtsmarkt",
-   "text": "Glühwein, Lichter, Bummeln (für die Winterzeit)."
+   "text": "Glühwein, Lichter und Bummeln, in der Weihnachtszeit.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z47",
+   "id": "p47",
    "titel": "Frühstück am Aussichtspunkt",
-   "text": "Brötchen holen und mit Blick essen."
+   "text": "Brötchen holen und mit Blick ins Tal essen.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "z48",
+   "id": "p48",
    "titel": "Gemeinsam etwas bauen",
-   "text": "Ein kleines Projekt in der Werkstatt."
+   "text": "Ein kleines Projekt in der Werkstatt, zum Beispiel ein Schild oder Regal.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "z49",
-   "titel": "Fotospaziergang durch eine fremde Stadt",
-   "text": "Jeder macht 10 Bilder vom anderen."
+   "id": "p49",
+   "titel": "Fotospaziergang in einer Nachbarstadt",
+   "text": "Jeder macht zehn Bilder vom anderen.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "z50",
+   "id": "p50",
    "titel": "Tag am See",
-   "text": "Baden, Liegen, Nichtstun."
+   "text": "Baden, Liegen, Nichtstun.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "z51",
+   "id": "p51",
    "titel": "Videospielabend",
-   "text": "Mit Snacks und Revanche."
+   "text": "Ein Koop-Spiel oder ein Revanche-Turnier mit Snacks.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z52",
+   "id": "p52",
    "titel": "Gemeinsame Bucket List",
-   "text": "Aufschreiben, was ihr noch alles erleben wollt."
+   "text": "Aufschreiben, was ihr noch alles zusammen erleben wollt.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z53",
+   "id": "p53",
    "titel": "Pralinen selber machen",
-   "text": "Und gleich vernaschen."
+   "text": "Schokolade schmelzen, Früchte oder Nüsse eintauchen, gleich vernaschen.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z54",
+   "id": "p54",
    "titel": "Blindverkostung",
-   "text": "Chips, Schokolade, Gummibärchen: Wer erkennt mehr?"
+   "text": "Chips, Schokolade, Gummibärchen: Wer erkennt mehr?",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "z55",
-   "titel": "Tanzkurs",
-   "text": "Ein Schnupperkurs reicht für den Anfang."
+   "id": "p55",
+   "titel": "Tanzkurs im Wohnzimmer",
+   "text": "Ein Tanzvideo aussuchen und zusammen die Schritte lernen.",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z56",
+   "id": "p56",
    "titel": "Sushi selber rollen",
-   "text": "Auch wenn's schief wird."
+   "text": "Auch wenn's schief wird.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "z57",
-   "titel": "Neue Stadt erkunden",
-   "text": "Ein Tagesausflug irgendwohin, wo ihr noch nie wart."
+   "id": "p57",
+   "titel": "Tagesausflug in eine Nachbarstadt",
+   "text": "Proviant mitnehmen und eine Stadt erkunden, in der ihr noch nie wart.",
+   "kategorie": "paar",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "z58",
+   "id": "p58",
    "titel": "Serienmarathon",
-   "text": "Kuscheldecke und eure Lieblingsserie."
+   "text": "Kuscheldecke, Snacks und eine neue Serie.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "z59",
+   "id": "p59",
    "titel": "Ein Tag ohne Handy",
-   "text": "Nur ihr zwei."
+   "text": "Nur ihr zwei. Was macht ihr stattdessen?",
+   "kategorie": "paar",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "z60",
+   "id": "p60",
    "titel": "Zurück an einen besonderen Ort",
-   "text": "Wo ihr euch kennengelernt oder geheiratet habt."
-  }
- ],
- "kinder": [
+   "text": "Wo ihr euch kennengelernt oder geheiratet habt.",
+   "kategorie": "paar",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
+  },
   {
-   "id": "k01",
+   "id": "w01",
    "titel": "Pyjama-Kinoabend",
-   "text": "Matratzenlager im Wohnzimmer und Popcorn."
+   "text": "Matratzenlager im Wohnzimmer und Popcorn.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k02",
-   "titel": "Picknick im Park",
-   "text": "Mit Ball und Frisbee."
-  },
-  {
-   "id": "k03",
-   "titel": "Zoo oder Tierpark",
-   "text": "Jeder sucht sein Lieblingstier."
-  },
-  {
-   "id": "k04",
-   "titel": "Spaßbad",
-   "text": "Rutschen bis die Finger schrumpelig sind."
-  },
-  {
-   "id": "k05",
+   "id": "w02",
    "titel": "Pizza selber belegen",
-   "text": "Jeder seine eigene."
+   "text": "Jeder seine eigene.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k06",
+   "id": "w03",
    "titel": "Schatzsuche",
-   "text": "Mit Hinweisen im Garten oder in der Wohnung."
+   "text": "Mit Hinweisen im Garten oder in der Wohnung.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k07",
+   "id": "w04",
    "titel": "Kekse backen und verzieren",
-   "text": "So bunt wie möglich."
+   "text": "So bunt wie möglich.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k08",
+   "id": "w05",
    "titel": "Fahrradtour mit Eis",
-   "text": "Das Eis ist das Ziel."
+   "text": "Das Eis ist das Ziel.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "k09",
+   "id": "w06",
    "titel": "Deckenburg bauen",
-   "text": "Und drin Geschichten erzählen."
+   "text": "Und drin Geschichten erzählen.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k10",
+   "id": "w07",
    "titel": "Naturbingo im Wald",
-   "text": "Wer findet zuerst Zapfen, Feder, Pilz …"
+   "text": "Wer findet zuerst Zapfen, Feder, Pilz …",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "k11",
+   "id": "w08",
    "titel": "Spielplatz-Tour",
-   "text": "Drei Spielplätze an einem Tag."
+   "text": "Drei Spielplätze an einem Tag.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "k12",
-   "titel": "Minigolf",
-   "text": "Familienturnier."
-  },
-  {
-   "id": "k13",
-   "titel": "Bowling",
-   "text": "Mit Banden für die Kleinen."
-  },
-  {
-   "id": "k14",
-   "titel": "Freizeitpark",
-   "text": "Ein ganzer Tag Action."
-  },
-  {
-   "id": "k15",
-   "titel": "Lagerfeuer mit Stockbrot",
-   "text": "Und Marshmallows."
-  },
-  {
-   "id": "k16",
-   "titel": "Zelten im Garten",
-   "text": "Mit Taschenlampe und Gruselgeschichten."
-  },
-  {
-   "id": "k17",
+   "id": "w09",
    "titel": "Bastelnachmittag",
-   "text": "Etwas basteln, das ihr aufhängt."
+   "text": "Etwas basteln, das ihr aufhängt.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k18",
-   "titel": "Familien-Spieleabend",
-   "text": "Jeder darf ein Spiel aussuchen."
-  },
-  {
-   "id": "k19",
-   "titel": "Theater oder Puppentheater",
-   "text": "Oder ein Kinderkonzert."
-  },
-  {
-   "id": "k20",
-   "titel": "Bauernhof besuchen",
-   "text": "Tiere streicheln, vielleicht melken."
-  },
-  {
-   "id": "k21",
+   "id": "w10",
    "titel": "Drachen steigen lassen",
-   "text": "An einem windigen Tag."
+   "text": "An einem windigen Tag auf der Wiese.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "k22",
+   "id": "w11",
    "titel": "Sterne gucken",
-   "text": "Mit Decke und Kakao."
+   "text": "Mit Decke und Kakao im Garten.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "k23",
-   "titel": "Mitmach-Museum",
-   "text": "Ausprobieren statt nur Anschauen."
+   "id": "w12",
+   "titel": "Willi plant den Tag",
+   "text": "Ihr macht mit, was er sagt (fast alles), Budget 20 €.",
+   "kategorie": "willi",
+   "kosten": 20,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "k24",
-   "titel": "Die Kinder planen den Tag",
-   "text": "Ihr macht mit, was sie sagen (fast alles)."
-  },
-  {
-   "id": "k25",
+   "id": "w13",
    "titel": "Pfannkuchen-Frühstück",
-   "text": "Mit Gesichtern aus Obst."
+   "text": "Mit Gesichtern aus Obst.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "k26",
+   "id": "w14",
    "titel": "Disco im Wohnzimmer",
-   "text": "Licht aus, Musik an."
+   "text": "Licht aus, Taschenlampen an, Musik laut.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "k27",
+   "id": "w15",
    "titel": "Schnee-Tag",
-   "text": "Schlitten fahren und Schneemann bauen (im Winter)."
+   "text": "Schneemann bauen und Schneeballschlacht im Garten, im Winter.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   },
   {
-   "id": "k28",
+   "id": "w16",
    "titel": "Wasserschlacht",
-   "text": "Im Garten (im Sommer)."
+   "text": "Im Garten, im Sommer.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "k29",
-   "titel": "Familien-Fotoshooting",
-   "text": "Mit lustigen Verkleidungen."
-  },
-  {
-   "id": "k30",
+   "id": "w17",
    "titel": "Pflanzen säen",
-   "text": "Kräuter oder Blumen, die ihr dann beobachtet."
+   "text": "Kräuter oder Blumen, die ihr dann beim Wachsen beobachtet.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
   },
   {
-   "id": "k31",
-   "titel": "Trampolin- oder Kletterhalle",
-   "text": "Austoben."
-  },
-  {
-   "id": "k32",
-   "titel": "Ausflug mit dem Zug",
-   "text": "Irgendwohin, die Fahrt ist das Abenteuer."
-  },
-  {
-   "id": "k33",
+   "id": "w18",
    "titel": "Werkstatt-Tag bei Papa",
-   "text": "Zusammen etwas bauen oder reparieren."
+   "text": "Zusammen etwas bauen oder reparieren.",
+   "kategorie": "willi",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "k34",
+   "id": "w19",
+   "titel": "Zelten im Garten",
+   "text": "Mit Taschenlampe und Gruselgeschichten.",
+   "kategorie": "willi",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "lang"
+  },
+  {
+   "id": "w20",
    "titel": "Wildpark",
-   "text": "Tiere füttern."
+   "text": "Tiere anschauen und füttern, Futter mitnehmen.",
+   "kategorie": "willi",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "k35",
+   "id": "f01",
+   "titel": "Familien-Spieleabend",
+   "text": "Jeder darf ein Spiel aussuchen, Snacks in die Mitte.",
+   "kategorie": "familie",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "f02",
    "titel": "Familien-Olympiade",
-   "text": "Sackhüpfen, Eierlauf, Siegerehrung."
+   "text": "Sackhüpfen, Eierlauf, Dosenwerfen und eine Siegerehrung.",
+   "kategorie": "familie",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "lang"
   },
   {
-   "id": "k36",
-   "titel": "Kino",
-   "text": "Mit großem Popcorn."
+   "id": "f03",
+   "titel": "Picknick im Park",
+   "text": "Mit Ball und Frisbee, jeder bereitet etwas vor.",
+   "kategorie": "familie",
+   "kosten": 20,
+   "ort": "unterwegs",
+   "dauer": "mittel"
   },
   {
-   "id": "k37",
+   "id": "f04",
+   "titel": "Lagerfeuer mit Stockbrot",
+   "text": "Und Marshmallows.",
+   "kategorie": "familie",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "f05",
+   "titel": "Familien-Fotoshooting",
+   "text": "Mit lustigen Verkleidungen und Selbstauslöser.",
+   "kategorie": "familie",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
+  },
+  {
+   "id": "f06",
+   "titel": "Heimkino",
+   "text": "Matratzenlager, Abstimmung über den Film, Popcorn für alle.",
+   "kategorie": "familie",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "f07",
    "titel": "Burg erkunden",
-   "text": "Ritter und Prinzessinnen gesucht."
+   "text": "Eine Burgruine in der Nähe, Ritter und Prinzessinnen gesucht.",
+   "kategorie": "familie",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "k38",
-   "titel": "Wohnwagen-Übernachtung",
-   "text": "Abenteuer vor der Haustür."
-  },
-  {
-   "id": "k39",
+   "id": "f08",
    "titel": "Badesee-Tag",
-   "text": "Sandburgen und Schwimmen."
+   "text": "Sandburgen und Schwimmen.",
+   "kategorie": "familie",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "lang"
   },
   {
-   "id": "k40",
+   "id": "f09",
    "titel": "Zeitkapsel",
-   "text": "Basteln, befüllen und vergraben."
+   "text": "Basteln, befüllen und vergraben.",
+   "kategorie": "familie",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
+  },
+  {
+   "id": "f10",
+   "titel": "Back-Wettbewerb",
+   "text": "Zwei Teams, wer macht die schönsten Muffins?",
+   "kategorie": "familie",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "x01",
+   "titel": "Nacht im Wohnwagen",
+   "text": "Mit Taschenlampen, Decken und Geschichten.",
+   "kategorie": "flexibel",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "lang"
+  },
+  {
+   "id": "x02",
+   "titel": "Waldspaziergang mit Kakao",
+   "text": "Thermoskanne mit Kakao mitnehmen und eine kleine Runde drehen.",
+   "kategorie": "flexibel",
+   "kosten": 0,
+   "ort": "unterwegs",
+   "dauer": "kurz"
+  },
+  {
+   "id": "x03",
+   "titel": "Gemeinsam Suppe kochen",
+   "text": "Jeder schnippelt etwas, zusammen wird gegessen.",
+   "kategorie": "flexibel",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "x04",
+   "titel": "Puzzle-Abend",
+   "text": "Ein großes Puzzle, an dem alle mitmachen.",
+   "kategorie": "flexibel",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "lang"
+  },
+  {
+   "id": "x05",
+   "titel": "Fotobuch-Abend",
+   "text": "Die schönsten Fotos aussuchen und ausdrucken.",
+   "kategorie": "flexibel",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "x06",
+   "titel": "Lesenachmittag",
+   "text": "Decken, Kissen, Kakao und jeder liest sein Buch.",
+   "kategorie": "flexibel",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
+  },
+  {
+   "id": "x07",
+   "titel": "Gruselgeschichten im Dunkeln",
+   "text": "Licht aus, Taschenlampe an, jeder erzählt eine Geschichte.",
+   "kategorie": "flexibel",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "kurz"
+  },
+  {
+   "id": "x08",
+   "titel": "Waffeln backen",
+   "text": "Mit allem, was die Küche hergibt.",
+   "kategorie": "flexibel",
+   "kosten": 10,
+   "ort": "zuhause",
+   "dauer": "kurz"
+  },
+  {
+   "id": "x09",
+   "titel": "Hofladen mit Tieren",
+   "text": "Einen Bauernhof oder Hofladen besuchen, Tiere anschauen.",
+   "kategorie": "flexibel",
+   "kosten": 10,
+   "ort": "unterwegs",
+   "dauer": "mittel"
+  },
+  {
+   "id": "x10",
+   "titel": "Karaoke für alle",
+   "text": "Karaoke-Videos auf YouTube, jeder singt mindestens einmal.",
+   "kategorie": "flexibel",
+   "kosten": 0,
+   "ort": "zuhause",
+   "dauer": "mittel"
   }
  ]
 }

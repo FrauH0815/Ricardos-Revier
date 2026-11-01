@@ -603,9 +603,9 @@ const table=new THREE.Group();table.position.set(0,.18,-31.9);room2.add(table);
  table.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true}})}
 const dateBox=new THREE.Group();dateBox.position.set(-.25,.18+.48,-31.9);room2.add(dateBox);
 {const b=new THREE.Mesh(new RoundedBoxGeometry(.42,.24,.3,3,.03),new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.3,clearcoat:1,map:tex(256,256,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#e94b92';for(let y=0;y<h;y+=32)for(let x=(y/32%2)*16;x<w;x+=32){g.font='16px system-ui';g.fillText('♥',x,y+20)}})}));b.position.y=.12;dateBox.add(b);
- const lid=new THREE.Mesh(new RoundedBoxGeometry(.45,.06,.33,3,.02),hotPink);lid.position.y=.26;dateBox.add(lid);
+ const hinge=new THREE.Group();hinge.position.set(0,.24,-.165);dateBox.add(hinge);const lid=new THREE.Mesh(new RoundedBoxGeometry(.45,.06,.33,3,.02),hotPink);lid.position.set(0,.02,.165);hinge.add(lid);dateBox.userData.hinge=hinge;
  const label=new THREE.Mesh(new THREE.PlaneGeometry(.34,.09),new THREE.MeshBasicMaterial({map:tex(256,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#e0337f';g.font='900 36px system-ui';g.textAlign='center';g.fillText('100 DATES',w/2,46)}),toneMapped:false}));label.position.set(0,.13,.152);dateBox.add(label);
- const bow=new THREE.Mesh(new THREE.TorusKnotGeometry(.045,.012,40,6,2,3),turq2);bow.position.y=.31;dateBox.add(bow)}
+ const bow=new THREE.Mesh(new THREE.TorusKnotGeometry(.045,.012,40,6,2,3),turq2);bow.position.set(0,.07,.165);hinge.add(bow);dateBox.userData.label=label}
 // pink candles and a book stack on the table
 for(const [x,h] of [[.45,.2],[.58,.14]]){kit.cyl(.035,.035,h,x,.18+.475+h/2,-31.75,white2);kit.cyl(.045,.04,.02,x,.18+.48,-31.75,roseGold)}
 kit.box(.36,.05,.26,.35,.18+.505,-32.05,turq2);kit.box(.32,.04,.24,.36,.18+.55,-32.04,hotPink);
@@ -664,6 +664,12 @@ const album=new THREE.Group();album.position.set(5.55,.18,-34.6);room2.add(album
 // Floral armchair angled towards the table
 place('./assets/models/chair.glb',-3.6,.18,-30.9,Math.PI*.72,1.25).then(o=>o.traverse(c=>{if(c.isMesh&&/fabric/i.test(c.material.name)){c.material=c.material.clone();c.material.color.set('#f7a8c9');if(c.material.sheenColor)c.material.sheenColor.set('#ffe0ef')}}));
 
+// The box shows the progress and opens its lid while the date box is in use.
+function boxLabel(text,sub){return tex(256,96,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#e0337f';g.textAlign='center';g.font='900 38px system-ui';g.fillText(text,w/2,44);g.font='800 22px system-ui';g.fillText(sub,w/2,80)})}
+dateBox.userData.label.material.map=boxLabel('100 DATES','in der Box');dateBox.userData.label.scale.y=1.4;
+addEventListener('rr-dates-progress',e=>{const {done,total}=e.detail;const m=dateBox.userData.label.material;m.map.dispose();m.map=boxLabel(`${done} / ${total}`,'Dates erlebt');m.needsUpdate=true});
+let lidTarget=0,lidAngle=0;addEventListener('rr-dates-ui',e=>{if(e.detail.kind==='box')lidTarget=e.detail.open?1:0});
+(function lidLoop(){requestAnimationFrame(lidLoop);if(Math.abs(lidTarget-lidAngle)<.001)return;lidAngle=lidTarget;dateBox.userData.hinge.rotation.x=-lidAngle*1.9})();
 // Walking limits inside the room
 const room2Obstacles=[[0,-35.9,2.7,1.1],[-2.2,-34.6,.6,.7],[2.2,-34.6,.6,.7],[0,-31.9,.95,.5],[0,-30.55,1.2,.4],[-3.6,-30.9,.55,.5],[-4.9,-26.3,.35,.4],[5.5,-34.6,.4,.85],[3.55,-35.3,.3,.3],[-5.35,-36.35,.35,.35]];
 // Things you can tap in the Barbie room
@@ -784,7 +790,7 @@ function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
 const datesUI=import('./dates/dates.js');
 function openThing(what){touchWalk=0;strafeTouch=0;
  if(what==='games')gamePick.classList.add('on');
- else datesUI.then(m=>({wheel:m.openWheel,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
+ else datesUI.then(m=>({wheel:m.openDateBox,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
 function releasePointer(e){
  const p=fingers.get(e.pointerId);if(!p)return;
  if(e.type==='pointerup'&&inside&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<14&&performance.now()-p.t<400){const what=tappedThing(e);if(what)openThing(what)}
@@ -805,7 +811,10 @@ let perfFrames=0,perfTime=0,perfStep=0;
 function watchPerformance(dt){perfFrames++;perfTime+=dt;if(perfFrames<90)return;const avg=perfTime/perfFrames;perfFrames=0;perfTime=0;
  if(avg>.038&&perfStep===0){ao.enabled=false;perfStep=1}else if(avg>.038&&perfStep===1){renderer.setPixelRatio(1);composer.setPixelRatio(1);resize();perfStep=2}}
 function resize(){renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=innerWidth<innerHeight?53:43;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();
-function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-last)/1000,.05);last=now;if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
+function animate(now){requestAnimationFrame(animate);
+ // While a date-room window covers the screen, pause the 3D scene (smoother UI, less battery).
+ if(window.__drOpen){last=now;return}
+ const dt=Math.min((now-last)/1000,.05);last=now;if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
  slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
  bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
  document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);inside=entry>.85;gamesBtn.classList.toggle('on',inside);
