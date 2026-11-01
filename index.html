@@ -818,8 +818,12 @@ renderer.domElement.addEventListener('pointermove',e=>{
 });
 // A short tap on the TV (from up to 12 m away) opens the game picker.
 const tapRay=new THREE.Raycaster();tapRay.far=12;
+// The red roll cabinet next to the RAM opens the tyre-change game; a small sign hints at it.
+const tyreSpot=new THREE.Mesh(new THREE.BoxGeometry(.75,1.6,1.05),new THREE.MeshBasicMaterial({visible:false}));tyreSpot.position.set(-8.6,floorTop+.8,-8.6);interior.add(tyreSpot);
+{const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');g.fillStyle='#1b1d20';g.fillRect(0,0,512,128);g.strokeStyle='#f07828';g.lineWidth=6;g.strokeRect(6,6,500,116);g.fillStyle='#fff';g.textAlign='center';g.font='900 46px system-ui,Arial';g.fillText('🔧 REIFENWECHSEL',256,62);g.fillStyle='#f0a868';g.font='700 26px system-ui,Arial';g.fillText('antippen & gegen die Zeit',256,104);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(.6,.15),new THREE.MeshBasicMaterial({map:t,toneMapped:false}));sign.rotation.y=Math.PI/2;sign.position.set(-8.27,floorTop+.75,-8.6);interior.add(sign)}
 // Tappable things: the TV in the garage, and wheel, date box, mailbox, album in the Barbie room.
-const tapTargets=[[pokerCounter,'poker'],[pokerSet,'poker'],[tvGroup,'games'],[openDoor,'door'],...roomTaps];
+const tapTargets=[[tyreSpot,'tyre'],[pokerCounter,'poker'],[pokerSet,'poker'],[tvGroup,'games'],[openDoor,'door'],...roomTaps];
 function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
  tapRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
  let best=null;for(const [obj,what] of tapTargets){const h=tapRay.intersectObject(obj,true)[0];if(h&&(!best||h.distance<best.d))best={d:h.distance,what}}
@@ -832,6 +836,7 @@ const datesUI=import('./dates/dates.js');
 let ghostUntil=0;addEventListener('click',e=>{if(performance.now()<ghostUntil){e.stopPropagation();e.preventDefault()}},true);
 function openThing(what){touchWalk=0;strafeTouch=0;ghostUntil=performance.now()+500;
  if(what==='poker'){gameFrame.querySelector('iframe').src='games/poker.html';gameFrame.classList.add('on')}
+ else if(what==='tyre'){gameFrame.querySelector('iframe').src='games/reifenwechsel.html';gameFrame.classList.add('on')}
  else if(what==='games')gamePick.classList.add('on');
  else if(what==='door')toggleDoor();
  else if(what==='car')detail?.enter();

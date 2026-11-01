@@ -1,0 +1,227 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Reifenwechsel · Ricardos Revier</title>
+<link rel="stylesheet" href="games.css">
+<style>
+#clock{font-variant-numeric:tabular-nums}
+#step{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 60px);text-align:center;z-index:5;pointer-events:none}
+#step b{display:inline-block;background:#0d1418c8;border:1px solid #ffffff2a;border-radius:16px;padding:8px 14px;font-size:14px;backdrop-filter:blur(8px)}
+#step .dots{display:flex;gap:6px;justify-content:center;margin-top:7px}#step .dots i{width:26px;height:5px;border-radius:3px;background:#ffffff30}#step .dots i.on{background:#f07828}#step .dots i.done{background:#7ddc8b}
+#ring{position:fixed;width:84px;height:84px;margin:-42px 0 0 -42px;z-index:6;pointer-events:none;display:none}#ring.on{display:block}
+#torque{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 64px);width:min(320px,82vw);z-index:6;display:none;pointer-events:none}
+#torque.on{display:block}#torque .lbl{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;text-shadow:0 1px 6px #000}
+#torque .bar{position:relative;height:16px;border-radius:9px;background:#0d1418d0;border:1px solid #ffffff35;overflow:hidden}
+#torque .zone{position:absolute;top:0;bottom:0;background:#3fa85a88;border-left:2px solid #7ddc8b;border-right:2px solid #7ddc8b}
+#torque .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#e6b780,#f07828)}
+#torque .fill.over{background:#d63a2a}
+#pen{position:fixed;right:14px;top:calc(env(safe-area-inset-top) + 112px);z-index:6;font-weight:900;color:#ff8a6a;text-shadow:0 2px 8px #000;opacity:0;transition:.3s}#pen.show{opacity:1}
+.hide{display:none!important}
+.medal{font-size:46px;line-height:1;margin:4px 0 8px}
+</style></head><body>
+<div id="hud"><a class="back" href="../index.html">‹</a><div class="pill" id="levelInfo">Reifenwechsel</div><div class="pill" id="clock">0,0 s</div></div>
+<div id="step"><b id="stepText"></b><div class="dots"><i></i><i></i><i></i><i></i><i></i></div></div>
+<svg id="ring" viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" fill="none" stroke="#ffffff30" stroke-width="7"/><circle id="ringArc" cx="42" cy="42" r="34" fill="none" stroke="#f07828" stroke-width="7" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 42 42)"/></svg>
+<div id="torque"><div class="lbl"><span>Drehmoment</span><span>im grünen Bereich loslassen</span></div><div class="bar"><div class="zone"></div><div class="fill"></div></div></div>
+<div id="pen"></div>
+<div id="msg"></div><div id="hint"></div>
+<div id="card" class="overlay hidden"><div class="panel"><h2 id="cardTitle"></h2><div class="medal" id="cardMedal"></div><p id="cardText"></p><div class="row"><button id="cardAgain">Nochmal</button><button id="cardMenu">Zur Auswahl</button></div></div></div>
+<div id="menu" class="overlay"><div class="panel">
+ <h1>Reifenwechsel</h1><p class="sub">Gegen die Uhr: Radmuttern lösen, aufbocken, Rad tauschen, über Kreuz festziehen, ablassen. Fehler kosten Strafsekunden.</p>
+ <div id="levels" class="levels"></div>
+</div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { Sfx, trophy, progress, $ } from './shared.js';
+
+const LEVELS=[
+ {id:'lehrling',name:'Lehrling',text:'Mit Hilfen, großzügiger Drehmoment-Bereich',hints:true,star:false,zone:[.55,.85],pumps:5,hold:.55,rusty:false,gold:45,silver:70},
+ {id:'geselle',name:'Geselle',text:'Über Kreuz anziehen, engerer Bereich',hints:false,star:true,zone:[.62,.8],pumps:7,hold:.6,rusty:false,gold:40,silver:60},
+ {id:'meister',name:'Meister',text:'Eine Mutter ist festgerostet, enger Bereich',hints:false,star:true,zone:[.66,.78],pumps:9,hold:.65,rusty:true,gold:42,silver:62}];
+const STEPS=['loosen','lift','swap','tighten','lower'];
+const STEP_TEXT={loosen:'1 · Radmuttern lösen',lift:'2 · Aufbocken',off:'3 · Altes Rad abnehmen',on:'3 · Neues Rad aufsetzen',tighten:'4 · Über Kreuz festziehen',lower:'5 · Ablassen'};
+
+// ---------- scene ----------
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.8));renderer.setSize(innerWidth,innerHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x15181b);scene.fog=new THREE.Fog(0x15181b,6,14);
+{const p=new THREE.PMREMGenerator(renderer);scene.environment=p.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.45}
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.05,50);
+scene.add(new THREE.HemisphereLight(0xdfe6ee,0x2a2522,.5));
+const key=new THREE.SpotLight(0xffffff,40,12,.7,.6,1.5);key.position.set(1.6,3.2,2.6);key.target.position.set(0,.3,0);key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.bias=-.0004;scene.add(key,key.target);
+const rim=new THREE.PointLight(0xffa860,6,6,2);rim.position.set(-2,1.2,1.5);scene.add(rim);
+// floor: worn concrete
+{const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.fillStyle='#55585a';g.fillRect(0,0,512,512);let v=3;const r=()=>{v=(v*16807)%2147483647;return v/2147483647};
+ for(let i=0;i<40000;i++){g.fillStyle=`rgba(${r()<.5?'20,20,20':'200,200,195'},${r()*.07})`;g.fillRect(r()*512,r()*512,1+r()*2,1+r()*2)}
+ for(let i=0;i<6;i++){const gr=g.createRadialGradient(256,256,0,256,256,1);g.fillStyle='rgba(15,12,8,.12)';g.beginPath();g.ellipse(r()*512,r()*512,30+r()*60,15+r()*40,r()*3,0,7);g.fill()}
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(6,6);t.colorSpace=THREE.SRGBColorSpace;
+ const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.MeshStandardMaterial({map:t,roughness:.75}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor)}
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(20,6),new THREE.MeshStandardMaterial({color:0x2a2e32,roughness:.9}));wall.position.set(0,3,-2.2);scene.add(wall);
+
+// ---------- car side (orange RAM fender) ----------
+const lifted=new THREE.Group();scene.add(lifted);
+const paint=new THREE.MeshPhysicalMaterial({color:0xd85f1c,roughness:.3,metalness:.4,clearcoat:1,clearcoatRoughness:.06});
+const black=new THREE.MeshStandardMaterial({color:0x111214,roughness:.6});
+{const W=3.4,H=1.05,R=.5,yb=.32;const s=new THREE.Shape();s.moveTo(-W/2,yb);s.lineTo(-R,yb);s.absarc(0,.38,R,Math.PI+.1,-.1,true);s.lineTo(W/2,yb);s.lineTo(W/2,yb+H);s.lineTo(-W/2,yb+H);s.closePath();
+ const g=new THREE.ExtrudeGeometry(s,{depth:.9,bevelEnabled:true,bevelThickness:.03,bevelSize:.03,bevelSegments:3,curveSegments:40});
+ const body=new THREE.Mesh(g,paint);body.position.z=-.95;body.castShadow=true;lifted.add(body);
+ const lip=new THREE.Mesh(new THREE.TorusGeometry(R+.02,.035,10,48,Math.PI-.2),black);lip.rotation.z=.1;lip.position.set(0,.38,-.03);lifted.add(lip);
+ const sill=new THREE.Mesh(new THREE.BoxGeometry(W,.08,.85),black);sill.position.set(0,yb+.03,-.5);lifted.add(sill);
+ const well=new THREE.Mesh(new THREE.CylinderGeometry(R-.02,R-.02,.8,40,1,true,Math.PI/2,Math.PI),new THREE.MeshStandardMaterial({color:0x080809,roughness:1,side:THREE.BackSide}));well.rotation.x=Math.PI/2;well.position.set(0,.38,-.45);lifted.add(well);
+ const stripe=new THREE.Mesh(new THREE.BoxGeometry(W,.03,.01),new THREE.MeshStandardMaterial({color:0x1a1a1a}));stripe.position.set(0,yb+.62,-.03);lifted.add(stripe)}
+// hub with brake disc and studs
+const hub=new THREE.Group();hub.position.set(0,.38,-.12);lifted.add(hub);
+{const disc=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.025,40),new THREE.MeshStandardMaterial({color:0x8a8c8e,roughness:.35,metalness:.9}));disc.rotation.x=Math.PI/2;hub.add(disc);
+ const caliper=new THREE.Mesh(new RoundedBoxGeometry(.09,.14,.06,2,.015),new THREE.MeshStandardMaterial({color:0xb21d18,roughness:.4}));caliper.position.set(-.15,.05,.02);hub.add(caliper);
+ const c=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.05,24),new THREE.MeshStandardMaterial({color:0x6f7275,metalness:.9,roughness:.3}));c.rotation.x=Math.PI/2;c.position.z=.03;hub.add(c)}
+const NUT_R=.075,STUD=[];for(let i=0;i<5;i++){const a=Math.PI/2+i*Math.PI*2/5;STUD.push(new THREE.Vector2(Math.cos(a)*NUT_R,Math.sin(a)*NUT_R));
+ const st=new THREE.Mesh(new THREE.CylinderGeometry(.007,.007,.08,8),new THREE.MeshStandardMaterial({color:0xc9b26a,metalness:1,roughness:.3}));st.rotation.x=Math.PI/2;st.position.set(STUD[i].x,STUD[i].y,.06);hub.add(st)}
+
+// ---------- wheels ----------
+function treadTexture(){const c=document.createElement('canvas');c.width=64;c.height=512;const g=c.getContext('2d');g.fillStyle='#1b1c1e';g.fillRect(0,0,64,512);g.fillStyle='#0c0c0d';for(let y=0;y<512;y+=24){g.fillRect(4,y,22,10);g.fillRect(38,y+12,22,10)}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1,8);return t}
+const tireMat=new THREE.MeshStandardMaterial({color:0x232426,roughness:.85,map:treadTexture()}),rimMatA=new THREE.MeshStandardMaterial({color:0xe2e5e8,metalness:.75,roughness:.28,envMapIntensity:1.6}),rimMatB=new THREE.MeshStandardMaterial({color:0x2b2e31,metalness:.9,roughness:.3});
+function makeWheel(rimMat){const w=new THREE.Group();
+ const prof=[[.235,-.12],[.3,-.13],[.355,-.12],[.38,-.08],[.385,0],[.38,.08],[.355,.12],[.3,.13],[.235,.12]].map(([r,z])=>new THREE.Vector2(r,z));
+ const tire=new THREE.Mesh(new THREE.LatheGeometry(prof,64),tireMat);tire.rotation.x=Math.PI/2;tire.castShadow=true;w.add(tire);
+ const side=new THREE.Mesh(new THREE.RingGeometry(.25,.36,64),new THREE.MeshStandardMaterial({color:0x1d1e20,roughness:.7}));side.position.z=.131;w.add(side);
+ const dish=new THREE.Mesh(new THREE.LatheGeometry([[.24,-.11],[.24,.1],[.215,.115],[.2,.1],[.1,.06],[.06,.07],[0,.07]].map(([r,z])=>new THREE.Vector2(r,z)),48),rimMat);dish.rotation.x=-Math.PI/2;w.add(dish);
+ for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const sp=new THREE.Mesh(new THREE.BoxGeometry(.05,.15,.035),rimMat);sp.position.set(Math.cos(a)*.15,Math.sin(a)*.15,.09);sp.rotation.z=a-Math.PI/2;w.add(sp)}
+ const cap=new THREE.Mesh(new THREE.CylinderGeometry(.035,.04,.02,24),new THREE.MeshStandardMaterial({color:0x111111,metalness:.5,roughness:.3}));cap.rotation.x=Math.PI/2;cap.position.z=.08;w.add(cap);
+ for(let i=0;i<5;i++){const hole=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.01,12),new THREE.MeshStandardMaterial({color:0x050505}));hole.rotation.x=Math.PI/2;hole.position.set(STUD[i].x,STUD[i].y,.071);w.add(hole)}
+ w.traverse(o=>{if(o.isMesh)o.castShadow=true});return w}
+const oldWheel=makeWheel(rimMatB),newWheel=makeWheel(rimMatA);
+oldWheel.rotation.z=.4;
+const nutMat=new THREE.MeshStandardMaterial({color:0xd8dadc,metalness:1,roughness:.18}),rustMat=new THREE.MeshStandardMaterial({color:0x7a4a2a,metalness:.5,roughness:.8});
+const nuts=[];
+for(let i=0;i<5;i++){const n=new THREE.Group();const hex=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.03,6),nutMat);hex.rotation.x=Math.PI/2;n.add(hex);
+ const hit=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),new THREE.MeshBasicMaterial({visible:false}));n.add(hit);
+ const glow=new THREE.Mesh(new THREE.RingGeometry(.028,.04,24),new THREE.MeshBasicMaterial({color:0x7ddc8b,transparent:true,opacity:0,depthWrite:false}));glow.position.z=.02;n.add(glow);
+ n.userData={i,hex,hit,glow};hub.add(n);nuts.push(n)}
+const tray=new THREE.Mesh(new THREE.CylinderGeometry(.12,.1,.04,24,1,true),new THREE.MeshStandardMaterial({color:0x2a2e33,metalness:.6,roughness:.4,side:THREE.DoubleSide}));tray.position.set(.62,.02,.45);scene.add(tray);
+
+// ---------- scissor jack ----------
+const jack=new THREE.Group();jack.position.set(-.8,0,-.35);scene.add(jack);
+const jackMat=new THREE.MeshStandardMaterial({color:0x2a5aa8,metalness:.5,roughness:.4}),steel=new THREE.MeshStandardMaterial({color:0x9ea3a7,metalness:1,roughness:.3});
+const jBase=new THREE.Mesh(new THREE.BoxGeometry(.32,.03,.12),jackMat);jBase.position.y=.015;jack.add(jBase);
+const jPad=new THREE.Mesh(new THREE.BoxGeometry(.14,.03,.1),jackMat);jack.add(jPad);
+const arms=[];for(let k=0;k<4;k++){const a=new THREE.Mesh(new THREE.BoxGeometry(.03,.16,.07),jackMat);jack.add(a);arms.push(a)}
+const screw=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.42,8),steel);screw.rotation.z=Math.PI/2;jack.add(screw);
+const handle=new THREE.Group();jack.add(handle);{const rod=new THREE.Mesh(new THREE.CylinderGeometry(.01,.01,.55,8),steel);rod.rotation.z=Math.PI/2;rod.position.x=.3;handle.add(rod);const grip=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.12,12),new THREE.MeshStandardMaterial({color:0xb21d18,roughness:.6}));grip.position.set(.57,.06,0);handle.add(grip)}
+function poseJack(h){const half=h/2,len=.16,ang=Math.asin(Math.min(.99,half/len));const dx=Math.cos(ang)*len/2;
+ const pts=[[-dx,half/2,ang],[dx,half/2,-ang],[-dx,half*1.5,-ang],[dx,half*1.5,ang]];arms.forEach((a,k)=>{a.position.set(pts[k][0],.03+pts[k][1],0);a.rotation.z=pts[k][2]});
+ jPad.position.y=.03+h+.015;screw.position.y=.03+half;handle.position.set(.21,.03+half,0)}
+// impact wrench
+const wrench=new THREE.Group();{const body=new THREE.Mesh(new RoundedBoxGeometry(.08,.08,.22,3,.02),new THREE.MeshStandardMaterial({color:0x1e1f22,roughness:.5}));body.position.z=.16;wrench.add(body);
+ const acc=new THREE.Mesh(new RoundedBoxGeometry(.06,.14,.07,2,.015),new THREE.MeshStandardMaterial({color:0xf07828,roughness:.5}));acc.position.set(0,-.09,.2);wrench.add(acc);
+ const sock=new THREE.Mesh(new THREE.CylinderGeometry(.028,.028,.06,12),steel);sock.rotation.x=Math.PI/2;sock.position.z=.03;wrench.add(sock)}
+wrench.visible=false;scene.add(wrench);
+
+// ---------- state ----------
+const sfx=new Sfx();
+let level=LEVELS[0],state='menu',phase='loosen',t0=0,elapsed=0,penalty=0,lift=0,liftTarget=0,pumps=0,pumpDir=0,wheelOn=oldWheel,swapAnim=null,hold=null,lastTight=-1,rusty=-1,camGoal=new THREE.Vector3(),camLook=new THREE.Vector3(),camPos=new THREE.Vector3(),lookNow=new THREE.Vector3(0,.4,0);
+const msg=$('#msg');function say(t,ms=1500){msg.textContent=t;msg.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>msg.classList.remove('show'),ms)}
+function hint(t){$('#hint').textContent=t||''}
+function addPenalty(s,why){penalty+=s;const p=$('#pen');p.textContent=`+${s} s · ${why}`;p.classList.add('show');clearTimeout(addPenalty.t);addPenalty.t=setTimeout(()=>p.classList.remove('show'),1600);navigator.vibrate?.([30,40,30])}
+function setPhase(p){phase=p;$('#stepText').textContent=STEP_TEXT[p];const idx={loosen:0,lift:1,off:2,on:2,tighten:3,lower:4}[p];
+ document.querySelectorAll('#step .dots i').forEach((d,i)=>{d.className=i<idx?'done':i===idx?'on':''});
+ hint({loosen:'Mutter antippen und halten, bis sie los ist.',lift:'Kurbel pumpen: nach oben und unten wischen.',off:'Altes Rad nach rechts wegwischen.',on:'Neues Rad nach links ans Auto wischen.',tighten:level.star?'Halten und im grünen Bereich loslassen. Immer über Kreuz!':'Halten und im grünen Bereich loslassen.',lower:'Nach unten wischen, um abzulassen.'}[p]);
+ if(p==='lift'||p==='lower'){pumps=0;pumpDir=0}
+ updateHints()}
+function nutWorld(n){return n.getWorldPosition(new THREE.Vector3())}
+function placeNutsOn(wheel,state2){nuts.forEach((n,i)=>{n.visible=true;n.userData.state=state2;n.position.set(STUD[i].x,STUD[i].y,state2==='loose'?.16:.105);n.userData.hex.material=i===rusty?rustMat:nutMat})}
+function updateHints(){nuts.forEach((n,i)=>{let on=false;
+ if(level.hints&&phase==='tighten'&&n.userData.state==='loose'){on=lastTight<0||i===(lastTight+2)%5||(i===(lastTight+3)%5&&nuts[(lastTight+2)%5].userData.state==='tight')}
+ n.userData.glow.material.opacity=on?.9:0})}
+function startLevel(i){level=LEVELS[i];$('#step').classList.remove('hide');$('#menu').classList.add('hidden');$('#card').classList.add('hidden');$('#levelInfo').textContent=level.name;
+ penalty=0;elapsed=0;lift=liftTarget=0;lastTight=-1;rusty=level.rusty?Math.floor(Math.random()*5):-1;
+ if(newWheel.parent)newWheel.parent.remove(newWheel);if(oldWheel.parent)oldWheel.parent.remove(oldWheel);
+ hub.add(oldWheel);oldWheel.position.set(0,0,.0);wheelOn=oldWheel;
+ scene.add(newWheel);newWheel.position.set(1.15,.39,.25);newWheel.rotation.set(0,-.35,.08);
+ nuts.forEach(n=>{if(n.parent!==hub)hub.add(n)});placeNutsOn(oldWheel,'tight');nuts.forEach(n=>n.position.z=.105);
+ state='count';let c=3;say('3',800);sfx.unlock();const iv=setInterval(()=>{c--;if(c>0){say(String(c),800);sfx.click()}else{clearInterval(iv);say('Los!',700);state='play';t0=performance.now();setPhase('loosen')}},800);setPhase('loosen');hint('')}
+
+// ---------- input ----------
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+function pickNut(e){ndc.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);ray.setFromCamera(ndc,camera);
+ const hits=ray.intersectObjects(nuts.filter(n=>n.visible&&n.parent===hub).map(n=>n.userData.hit),false);return hits[0]?nuts.find(n=>n.userData.hit===hits[0].object):null}
+let swipe=null;
+renderer.domElement.addEventListener('pointerdown',e=>{sfx.unlock();if(state!=='play')return;
+ if(phase==='loosen'||phase==='tighten'){const n=pickNut(e);if(n&&((phase==='loosen'&&n.userData.state==='tight')||(phase==='tighten'&&n.userData.state==='loose'))){hold={n,t:0,start:performance.now(),need:(phase==='loosen'&&n.userData.i===rusty)?level.hold*3.2:level.hold};startWrench(n)}else if(n)say(phase==='loosen'?'Die ist schon los.':'Die sitzt schon.',800)}
+ else swipe={x:e.clientX,y:e.clientY,ly:e.clientY}});
+renderer.domElement.addEventListener('pointermove',e=>{if(!swipe||state!=='play')return;
+ if(phase==='lift'||phase==='lower'){const dy=e.clientY-swipe.ly;if(Math.abs(dy)>38){const dir=Math.sign(dy);
+   if(phase==='lower'&&dir>0){pumps++;liftTarget=Math.max(0,1-pumps/3);sfx.click();handle.rotation.x+=.6}
+   if(phase==='lift'&&dir!==pumpDir){pumpDir=dir;if(dir>0){pumps++;liftTarget=Math.min(1,pumps/level.pumps);sfx.click();navigator.vibrate?.(12)}handle.rotation.x=dir*.45}
+   swipe.ly=e.clientY;
+   if(phase==='lift'&&pumps>=level.pumps){swipe=null;setTimeout(()=>setPhase('off'),350)}
+   if(phase==='lower'&&pumps>=3){swipe=null;finish()}}}
+ else if(phase==='off'&&e.clientX-swipe.x>70){swipe=null;removeOld()}
+ else if(phase==='on'&&swipe.x-e.clientX>70){swipe=null;mountNew()}});
+const endPointer=()=>{swipe=null;if(hold)releaseHold()};
+renderer.domElement.addEventListener('pointerup',endPointer);renderer.domElement.addEventListener('pointercancel',endPointer);
+
+// ---------- actions ----------
+let buzz=null;
+function startWrench(n){wrench.visible=true;const p=nutWorld(n);wrench.position.copy(p);
+ clearInterval(buzz);buzz=setInterval(()=>{sfx.noise(.035,phase==='tighten'?2400:2900,2.5,.22,'bandpass');if(Math.random()<.5)sfx.tone(110+Math.random()*30,.03,'sawtooth',.04)},45);
+ if(phase==='tighten'){$('#torque').classList.add('on');const z=$('#torque .zone');z.style.left=level.zone[0]*100+'%';z.style.width=(level.zone[1]-level.zone[0])*100+'%'}
+ else $('#ring').classList.add('on')}
+function stopWrench(){clearInterval(buzz);wrench.visible=false;$('#ring').classList.remove('on');$('#torque').classList.remove('on');$('#torque .fill').style.width='0';$('#torque .fill').classList.remove('over')}
+function releaseHold(){const h=hold;hold=null;stopWrench();if(!h)return;h.t=(performance.now()-h.start)/1000;
+ if(phase==='loosen'){if(h.t<h.need)say(h.n.userData.i===rusty?'Festgerostet! Länger halten.':'Noch nicht los, länger halten.',900);return}
+ if(phase==='tighten'){const v=h.t/h.need*.5;
+  if(v<level.zone[0]){say('Zu locker, nochmal.',900);return}
+  const i=h.n.userData.i;
+  if(level.star&&lastTight>=0&&i!==(lastTight+2)%5&&i!==(lastTight+3)%5)addPenalty(3,'nicht über Kreuz');
+  if(v>level.zone[1])addPenalty(3,'überzogen');else say('Sitzt! ✓',600);
+  h.n.userData.state='tight';h.n.position.z=.105;lastTight=i;sfx.tone(700,.08,'triangle',.12);updateHints();
+  if(nuts.every(n=>n.userData.state==='tight'))setTimeout(()=>setPhase('lower'),400)}}
+function nutLoosened(n){n.userData.state='off';sfx.tone(520,.06,'triangle',.1);
+ // fly into the tray
+ const from=nutWorld(n);scene.attach(n);const to=tray.position.clone().add(new THREE.Vector3((n.userData.i-2)*.03,.03,(n.userData.i%2)*.03));const t1=performance.now();
+ (function fly(){const k=Math.min(1,(performance.now()-t1)/450);n.position.lerpVectors(from,to,k);n.position.y+=Math.sin(k*Math.PI)*.25;n.rotation.x+=.3;if(k<1)requestAnimationFrame(fly)})();
+ if(nuts.every(x=>x.userData.state==='off'))setTimeout(()=>setPhase('lift'),400)}
+function removeOld(){if(lift<.95){say('Erst ganz aufbocken!',900);return}sfx.noise(.3,300,1,.4);
+ scene.attach(oldWheel);const from=oldWheel.position.clone(),t1=performance.now();
+ swapAnim=()=>{const k=Math.min(1,(performance.now()-t1)/700);oldWheel.position.set(from.x+k*1.6,Math.max(.385,from.y-k*.1),from.z+k*.6);oldWheel.rotation.z-=.08;if(k>=1){swapAnim=null;setPhase('on')}}}
+function mountNew(){sfx.noise(.25,250,1,.45);const target=new THREE.Vector3();const t1=performance.now(),from=newWheel.position.clone(),fromRot=newWheel.rotation.clone();
+ swapAnim=()=>{hub.getWorldPosition(target);const k=Math.min(1,(performance.now()-t1)/700),e=1-Math.pow(1-k,3);newWheel.position.lerpVectors(from,target,e);newWheel.rotation.set(fromRot.x*(1-e),fromRot.y*(1-e),fromRot.z*(1-e));
+  if(k>=1){swapAnim=null;hub.attach(newWheel);newWheel.position.set(0,0,0);newWheel.rotation.set(0,0,0);wheelOn=newWheel;
+   nuts.forEach(n=>{hub.attach(n);n.rotation.set(0,0,0)});placeNutsOn(newWheel,'loose');sfx.click();setPhase('tighten')}}}
+function finish(){state='done';const total=elapsed+penalty,idx=LEVELS.indexOf(level);
+ const medal=total<=level.gold?'🥇':total<=level.silver?'🥈':'🥉';const key='reifen_best_'+level.id,best=progress.get(key,0);const isBest=!best||total<best;if(isBest)progress.set(key,+total.toFixed(1));
+ progress.unlock('reifen',idx+1);trophy('reifen','level-'+level.id,`Reifenwechsel: ${level.name} geschafft`);
+ if(total<30)trophy('reifen','boxenstopp','Boxenstopp: Reifenwechsel unter 30 Sekunden');if(medal==='🥇'&&level.id==='meister')trophy('reifen','meister-gold','Reifenwechsel: Gold als Meister');
+ sfx.win();$('#cardTitle').textContent='Rad gewechselt!';$('#cardMedal').textContent=medal;
+ $('#cardText').innerHTML=`Zeit ${fmt(elapsed)}${penalty?` + ${penalty} s Strafe`:''} = <b>${fmt(total)}</b>.<br>${isBest?'Neue Bestzeit! 🏁':`Bestzeit: ${fmt(best)}`}<br><small>Gold ≤ ${level.gold} s · Silber ≤ ${level.silver} s</small>`;
+ $('#cardAgain').onclick=()=>startLevel(idx);$('#cardMenu').onclick=()=>{$('#card').classList.add('hidden');openMenu()};setTimeout(()=>$('#card').classList.remove('hidden'),700)}
+const fmt=s=>s.toFixed(1).replace('.',',')+' s';
+function openMenu(){state='menu';$('#step').classList.add('hide');const box=$('#levels');box.innerHTML='';const un=progress.unlocked('reifen');
+ LEVELS.forEach((L,i)=>{const best=progress.get('reifen_best_'+L.id,0);const b=document.createElement('button');b.className='level'+(i>un?' locked':'');b.innerHTML=`<b>${i+1}. ${L.name}</b><small>${i>un?'🔒 Erst das vorige Level schaffen':L.text+(best?` · Bestzeit ${fmt(best)}`:'')}</small>`;if(i<=un)b.onclick=()=>startLevel(i);box.appendChild(b)});
+ $('#menu').classList.remove('hidden')}
+
+// ---------- loop ----------
+function cameraFor(){const portrait=innerWidth<innerHeight,a=innerWidth/innerHeight,hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*a);
+ const spec={loosen:[0,.42,1.0],tighten:[0,.45+lift*.1,1.0],lift:[-.62,.3,1.45],off:[.5,.45,2.4],on:[.5,.45,2.4],lower:[-.5,.32,1.6]}[phase]||[0,.45,1.6];
+ const width=spec[2],dist=Math.max(1.1,width/2/Math.tan(hf/2))*(portrait?1:.9);camLook.set(spec[0],spec[1],0);camGoal.set(spec[0]+.35,spec[1]+.35,dist)}
+let last=performance.now();
+function frame(now){requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(state==='play'){elapsed=(now-t0)/1000;$('#clock').textContent=fmt(elapsed+penalty)}
+ lift+=(liftTarget-lift)*(1-Math.exp(-6*dt));lifted.position.y=lift*.11;poseJack(.3+lift*.11-.03);
+ if(hold){hold.t=(now-hold.start)/1000;const k=hold.t/hold.need;
+  if(phase==='loosen'){const p=hold.n.position;p.z=.105+Math.min(1,k)*.05;hold.n.rotation.z-=dt*30;wrench.position.copy(nutWorld(hold.n));$('#ringArc').style.strokeDashoffset=213.6*(1-Math.min(1,k));
+   const s=nutWorld(hold.n).project(camera);const r=$('#ring');r.style.left=(s.x*.5+.5)*innerWidth+'px';r.style.top=(-s.y*.5+.5)*innerHeight+'px';
+   if(k>=1){const n=hold.n;hold=null;stopWrench();nutLoosened(n)}}
+  else{const v=Math.min(1,k*.5);hold.n.rotation.z+=dt*20;const f=$('#torque .fill');f.style.width=v*100+'%';f.classList.toggle('over',v>level.zone[1]);if(v>=1&&!hold.maxed){hold.maxed=true;say('Zu fest! Loslassen.',800)}}}
+ if(swapAnim)swapAnim();
+ cameraFor();camPos.lerp(camGoal,1-Math.exp(-3.5*dt));if(camPos.lengthSq()===0)camPos.copy(camGoal);lookNow.lerp(camLook,1-Math.exp(-3.5*dt));camera.position.copy(camPos);camera.lookAt(lookNow);
+ renderer.render(scene,camera)}
+camPos.set(.35,.8,2.2);
+startLevel.toString;openMenu();
+// idle scene behind the menu
+hub.add(oldWheel);nuts.forEach(n=>n.position.set(STUD[n.userData.i].x,STUD[n.userData.i].y,.105));scene.add(newWheel);newWheel.position.set(1.15,.39,.25);newWheel.rotation.set(0,-.35,.08);
+requestAnimationFrame(frame);
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+window.__rw={get:()=>({state,phase,lift:+lift.toFixed(2),pumps,penalty,nuts:nuts.map(n=>n.userData.state)})};
+</script></body></html>
