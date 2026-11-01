@@ -267,12 +267,58 @@ const glassMat=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.04,tran
 for(let i=0;i<3;i++){const g=new THREE.Mesh(new THREE.CylinderGeometry(.038,.03,.13,18,1,true),glassMat);g.position.set(7.4+i*1.1,1.31,-18.05);interior.add(g)}
 
 // Door to the adjoining room on the back wall, clearly visible and framed
-// The adjoining-room door is built into the actual rear wall.
-box(2.32,3.14,.12,0,1.67,-24.76,mat('#22282c',.55,.5),interior);
-box(1.97,2.86,.08,0,1.52,-24.66,wood,interior);
-box(.09,.09,.15,.77,1.4,-24.57,chrome,interior);
+// Open doorway into the adjoining room; hinged door stands open against the wall.
 for(const x of [-1.17,1.17])box(.11,3.23,.34,x,1.64,-24.68,beam,interior);
 box(2.48,.12,.35,0,3.31,-24.68,beam,interior);
+const openDoor=new THREE.Group();openDoor.position.set(1.12,0,-24.82);openDoor.rotation.y=-Math.PI/2;interior.add(openDoor);
+box(2.12,2.95,.09,-1.06,1.52,0,mat('#eee2e8',.55),openDoor);
+box(.09,.09,.15,-1.88,1.35,.1,chrome,openDoor);
+
+// ROOM TWO: warm, playful pink-and-white private date room, connected behind garage.
+const dateRoom=new THREE.Group();interior.add(dateRoom);
+const pinkWall=mat('#f3c8db',.95),whiteWall=mat('#fff4f7',.91),rose=mat('#df79ab',.76),blush=mat('#f8a9c9',.9),turquoise=mat('#7ac8c8',.5),cream=mat('#fff6f0',.8),goldPink=mat('#e2a4ba',.35,.65);
+box(12,.2,12,0,.08,-31.0,cream,dateRoom);
+box(12,.18,12,0,4.7,-31,whiteWall,dateRoom);
+box(.16,4.65,12,-6,2.38,-31,pinkWall,dateRoom);
+box(.16,4.65,12,6,2.38,-31,pinkWall,dateRoom);
+box(12,4.65,.16,0,2.38,-37,pinkWall,dateRoom);
+// Front wall continues the garage rear wall, leaving the door opening.
+box(4.9,4.65,.16,-3.55,2.38,-25,whiteWall,dateRoom);
+box(4.9,4.65,.16,3.55,2.38,-25,whiteWall,dateRoom);
+box(2.2,1.6,.16,0,3.85,-25,whiteWall,dateRoom);
+// Ceiling light and pink ambient illumination.
+const roomLight=new THREE.PointLight(0xffd6e8,58,17,1.8);roomLight.position.set(0,4.2,-31);dateRoom.add(roomLight);
+const lamp=new THREE.Mesh(new THREE.SphereGeometry(.42,24,16),new THREE.MeshStandardMaterial({color:0xfff5fa,emissive:0xffd5ec,emissiveIntensity:1.8}));lamp.position.set(0,4.25,-31);dateRoom.add(lamp);
+// Soft pink sofa against the rear wall, including back and rounded cushions.
+box(4.2,.52,1.35,0,.65,-35.65,rose,dateRoom);
+box(4.2,1.05,.34,0,1.18,-36.27,blush,dateRoom);
+for(const x of [-1.9,1.9])box(.36,.85,1.4,x,.88,-35.65,rose,dateRoom);
+for(const x of [-1.15,0,1.15])box(1.08,.2,1.08,x,.99,-35.55,blush,dateRoom);
+// Fluffy-style layered rug and small central table with a physical date box.
+box(5.6,.045,3.4,0,.17,-32.65,mat('#f5dce8',1),dateRoom);
+box(2.05,.11,1.15,0,.68,-32.1,whiteWall,dateRoom);
+for(const x of [-.83,.83])for(const z of [-32.52,-31.68])box(.11,.48,.11,x,.39,z,goldPink,dateRoom);
+box(.78,.42,.53,0,.97,-32.1,rose,dateRoom);
+box(.83,.07,.58,0,1.21,-32.1,cream,dateRoom);
+// Date-box label is a texture, not an interactive function yet.
+function roomLabel(message,w=512,h=180){
+ const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');
+ ctx.clearRect(0,0,w,h);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#713b5b';ctx.font='bold 46px system-ui';ctx.fillText(message,w/2,h/2);
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,transparent:true,side:THREE.DoubleSide});
+}
+const dateSign=new THREE.Mesh(new THREE.PlaneGeometry(.7,.25),roomLabel('100 DATES'));dateSign.rotation.x=-Math.PI/2;dateSign.position.set(0,1.251,-32.1);dateRoom.add(dateSign);
+// Exactly one wedding photo frame; neutral placeholder until the real photo is provided.
+box(2.35,1.9,.13,-3.1,2.7,-36.85,cream,dateRoom);
+box(2.06,1.61,.03,-3.1,2.7,-36.76,mat('#d4b3be',.9),dateRoom);
+const weddingLabel=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.5),roomLabel('UNSER FOTO'));weddingLabel.position.set(-3.1,2.7,-36.735);dateRoom.add(weddingLabel);
+// Digital album stand and letterbox: visual models, interactions to follow.
+box(1.85,1.05,.5,3.75,.69,-35.75,cream,dateRoom);
+box(1.3,.95,.1,3.75,1.58,-35.83,turquoise,dateRoom);
+const albumText=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.37),roomLabel('ALBUM'));albumText.position.set(3.75,1.58,-35.765);dateRoom.add(albumText);
+box(1.15,1.05,.42,-4.35,1.25,-29.7,rose,dateRoom);
+box(1.24,.15,.52,-4.35,1.82,-29.7,cream,dateRoom);
+box(.78,.055,.035,-4.35,1.53,-29.46,mat('#824c65'),dateRoom);
+const mailText=new THREE.Mesh(new THREE.PlaneGeometry(1.05,.31),roomLabel('POST'));mailText.position.set(-4.35,1.16,-29.475);dateRoom.add(mailText);
 // Pickup and work area have ample walking clearance
 // Pickup: Fahrzeugkörper, Fahrerkabine, Reifen, Kühler, Licht
 const car=new THREE.Group();interior.add(car);car.position.set(-5.2,.05,-5.8);car.scale.setScalar(1.18);
@@ -552,9 +598,9 @@ if(inside){
  velocityX+=(targetX-velocityX)*acceleration;
  velocityZ+=(targetZ-velocityZ)*acceleration;
  const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
- const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-23.6,-1.6);
+ const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-36.35,-1.6);
  const obstacles=[[-5.2,-5.8,1.6,3.35],[-6.55,-19.8,.85,1.85],[-8.4,-23.15,1.75,.85],[-8.55,-19.8,.6,.95],[-8.45,-16.9,.6,.55],[-10.3,-19.8,.6,1.7],[-3.4,-24.4,1.3,.5],[9.75,-9.9,.65,3.3],[10.4,-21.4,.75,3.6],[7.8,-24.4,2.6,.75],[8.5,-18.2,1.95,.6],[-10.1,-8,.9,7.5],[-10.25,-16.9,.55,.55]];
- const blocked=(x,z)=>obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz);
+ const blocked=(x,z)=>{if(z < -24.55){if(Math.abs(x)>5.55)return true;if(z > -25.4&&Math.abs(x)>1.02)return true;return Math.abs(x)<2.55&&z < -34.9&&z > -36.5}return obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)};
  if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
  if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;
 }else{velocityX=0;velocityZ=0}
