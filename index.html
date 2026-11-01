@@ -589,7 +589,8 @@ const heart=new THREE.Group();heart.position.set(0,2.95,-36.86);room2.add(heart)
  const photoMat=new THREE.MeshStandardMaterial({map:placeholder,roughness:.35});const photo=new THREE.Mesh(pg,photoMat);photo.position.z=.02;heart.add(photo);
  // Photo comes from the private Supabase bucket when connected, else from a local file if one is deployed.
  const useImg=url=>new THREE.TextureLoader().load(url,t=>{t.colorSpace=THREE.SRGBColorSpace;const a=t.image.width/t.image.height;t.repeat.set(a>1?1/a:1,a>1?1:a);t.offset.set(a>1?(1-1/a)/2:0,a>1?0:(1-a)*.55);photoMat.map=t;photoMat.needsUpdate=true});
- import('./dates/dates.js').then(async m=>{const u=await m.roomPhotoUrl();if(u)useImg(u);else fetch('assets/room/lieblingsbild.jpg',{method:'HEAD'}).then(r=>{if(r.ok)useImg('assets/room/lieblingsbild.jpg')}).catch(()=>{})}).catch(()=>{})}
+ const loadRoomPhoto=()=>import('./dates/dates.js').then(async m=>{const u=await m.roomPhotoUrl();if(u)useImg(u);else{photoMat.map=placeholder;photoMat.needsUpdate=true}}).catch(()=>{});
+ loadRoomPhoto();addEventListener('rr-dates-auth',loadRoomPhoto)}
 // Sconces either side of the heart
 for(const x of [-2.05,2.05]){kit.box(.12,.2,.04,x,2.75,-36.9,roseGold);kit.cyl(.012,.012,.25,x,2.88,-36.78,roseGold,Math.PI/2.6);
  const shade=new THREE.Mesh(new THREE.CylinderGeometry(.09,.15,.2,20,1,true),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffe6f0,emissiveIntensity:.9,side:THREE.DoubleSide}));shade.position.set(x,3.1,-36.68);room2.add(shade);
@@ -667,6 +668,7 @@ place('./assets/models/chair.glb',-3.6,.18,-30.9,Math.PI*.72,1.25).then(o=>o.tra
 // The box shows the progress and opens its lid while the date box is in use.
 function boxLabel(text,sub){return tex(256,96,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#e0337f';g.textAlign='center';g.font='900 38px system-ui';g.fillText(text,w/2,44);g.font='800 22px system-ui';g.fillText(sub,w/2,80)})}
 dateBox.userData.label.material.map=boxLabel('100 DATES','in der Box');dateBox.userData.label.scale.y=1.4;
+addEventListener('rr-dates-auth',e=>{if(!e.detail.loggedIn){const m=dateBox.userData.label.material;m.map=boxLabel('100 DATES','in der Box');m.needsUpdate=true}});
 addEventListener('rr-dates-progress',e=>{const {done,total}=e.detail;const m=dateBox.userData.label.material;m.map.dispose();m.map=boxLabel(`${done} / ${total}`,'Dates erlebt');m.needsUpdate=true});
 let lidTarget=0,lidAngle=0;addEventListener('rr-dates-ui',e=>{if(e.detail.kind==='box')lidTarget=e.detail.open?1:0});
 (function lidLoop(){requestAnimationFrame(lidLoop);if(Math.abs(lidTarget-lidAngle)<.001)return;lidAngle=lidTarget;dateBox.userData.hinge.rotation.x=-lidAngle*1.9})();

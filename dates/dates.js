@@ -79,16 +79,19 @@ async function supabaseBackend(){
  let cfg;try{cfg=await import('./config.js')}catch{return null}
  // Switch over only once login and tables are confirmed (DATES_READY in config.js); until then data stays on this phone.
  const key=cfg.SUPABASE_PUBLISHABLE_KEY||cfg.SUPABASE_ANON_KEY;if(!cfg.SUPABASE_URL||!key||!cfg.DATES_READY)return null;
- const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm');
+ const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/+esm');
  const sb=createClient(cfg.SUPABASE_URL,key),T=cfg.DATE_IDEAS_TABLE||'ricardo_date_ideas',M=cfg.DATE_MESSAGES_TABLE||'ricardo_date_messages',B=cfg.DATE_PHOTOS_BUCKET||'ricardo-date-photos';
- const name=async()=>{const {data}=await sb.auth.getUser();return data.user?.user_metadata?.name||null};
+ const name=async()=>{const {data}=await sb.auth.getSession();return data.session?.user?.user_metadata?.name||null};
+ // Tell the 3D room when someone logs in or out (photo in the heart frame, progress on the box).
+ sb.auth.onAuthStateChange((ev,session)=>{if(ev==='SIGNED_IN'||ev==='SIGNED_OUT'||(ev==='INITIAL_SESSION'&&session))setTimeout(()=>window.dispatchEvent(new CustomEvent('rr-dates-auth',{detail:{loggedIn:!!session}})),0)});
  const signed=async p=>{const {data}=await sb.storage.from(B).createSignedUrl(p,3600);return data?.signedUrl||null};
  const upload=async(id,blobs)=>{const paths=[];for(const b of blobs){const p=`${id}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;const up=await sb.storage.from(B).upload(p,b,{contentType:'image/jpeg'});if(up.error)throw up.error;paths.push(p)}return paths};
  const row=async id=>{const {data}=await sb.from(T).select('*').eq('id',id).maybeSingle();return data};
  const save=async(id,v)=>{const {error}=await sb.from(T).upsert({id,...v,updated_by:await name(),updated_at:new Date().toISOString()});if(error)throw error};
  return{kind:'supabase',
   async loggedIn(){const {data}=await sb.auth.getSession();return !!data.session},
-  async login(email,pw){const {error}=await sb.auth.signInWithPassword({email,password:pw});if(error)throw error},
+  async login(email,pw){const {error}=await sb.auth.signInWithPassword({email,password:pw});if(error)throw new Error(error.message==='Invalid login credentials'?'E-Mail oder Passwort stimmt nicht.':error.message)},
+  async logout(){await sb.auth.signOut()},
   me:name,async setMe(){},
   async records(){const {data,error}=await sb.from(T).select('id,status,erlebt_am,erinnerung,fotos').not('status','is',null);if(error)throw error;
    const out={};for(const r of data)out[r.id]={status:r.status,erlebt_am:r.erlebt_am,erinnerung:r.erinnerung,fotos:await Promise.all((r.fotos||[]).map(signed))};return out},
@@ -117,7 +120,7 @@ function fitsPeople(kat,sel){const n=sel.length;
 const TIME={kurz:['kurz'],mittel:['kurz','mittel'],egal:['kurz','mittel','lang']};
 function matches(list,rec,f){return list.filter(x=>!rec[x.id]&&fitsPeople(x.kategorie,f.people)&&x.kosten<=f.budget&&(f.ort==='egal'||x.ort===f.ort)&&TIME[f.zeit].includes(x.dauer))}
 export async function progress(){await ready;const [l,r]=await Promise.all([ideas(),store.records().catch(()=>({}))]);const done=l.filter(x=>r[x.id]?.status==='erlebt').length;return{done,total:l.length}}
-async function announce(){const p=await progress();window.dispatchEvent(new CustomEvent('rr-dates-progress',{detail:p}))}
+async function announce(){if(store.kind==='supabase'&&!await store.loggedIn())return;const p=await progress();window.dispatchEvent(new CustomEvent('rr-dates-progress',{detail:p}))}
 
 // ---------------- helpers ----------------
 const el=html=>{const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstChild};
@@ -129,10 +132,12 @@ function overlay(kind){const o=el('<div class="dr-ov"><div class="dr-card"><butt
 function open(o){o.classList.add('on');window.__drOpen=true;window.dispatchEvent(new CustomEvent('rr-dates-ui',{detail:{kind:o.dataset.kind,open:true}}))}
 function close(o){o.classList.remove('on');window.__drOpen=document.querySelectorAll('.dr-ov.on').length>0;window.dispatchEvent(new CustomEvent('rr-dates-ui',{detail:{kind:o.dataset.kind,open:false}}))}
 let actx;function tone(f=900,d=.06,v=.08){try{actx??=new (window.AudioContext||window.webkitAudioContext)();actx.resume();const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(v,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+d+.01)}catch{}}
-const note=()=>store.kind==='local'?'<div class="dr-note">Wird noch nur auf diesem Handy gespeichert, bis Supabase fertig eingerichtet ist.</div>':'';
+const note=()=>store.kind==='local'?'<div class="dr-note">Wird noch nur auf diesem Handy gespeichert, bis Supabase fertig eingerichtet ist.</div>':'<div class="dr-note">🔒 Privat, nur für Franzi und Ricardo · <button class="dr-logout" style="border:0;background:none;color:#c2185b;font:inherit;text-decoration:underline;padding:0">Abmelden</button></div>';
+document.addEventListener('click',async e=>{if(!e.target.closest('.dr-logout'))return;await store.logout();document.querySelectorAll('.dr-ov.on').forEach(close)});
 async function needLogin(body,then){if(store.kind!=='supabase'||await store.loggedIn())return false;
  body.innerHTML=`<h2>Anmelden</h2><p class="sub">Damit nur ihr zwei das hier seht.</p><input type="email" placeholder="E-Mail" autocomplete="username"><input type="password" placeholder="Passwort" autocomplete="current-password"><button class="dr-btn" style="width:100%">Anmelden</button><div class="dr-note"></div>`;
- body.querySelector('button').onclick=async()=>{const [e,p]=body.querySelectorAll('input');try{await store.login(e.value.trim(),p.value);then()}catch(err){body.querySelector('.dr-note').textContent='Das hat nicht geklappt: '+err.message}};return true}
+ const go=async()=>{const [e,p]=body.querySelectorAll('input'),b=body.querySelector('button');b.disabled=true;try{await store.login(e.value.trim(),p.value);announce();then()}catch(err){b.disabled=false;body.querySelector('.dr-note').textContent=err.message}};
+ body.querySelector('button').onclick=go;body.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')go()});return true}
 async function whoAmI(body,then){const me=await store.me();if(me)return me;
  body.innerHTML=`<h2>Wer bist du?</h2><p class="sub">Das merkt sich dieses Handy.</p><div class="dr-pick"><button class="dr-btn">Franzi</button><button class="dr-btn turq">Ricardo</button></div>`;
  body.querySelectorAll('button').forEach(b=>b.onclick=async()=>{await store.setMe(b.textContent);then()});return null}
@@ -221,4 +226,4 @@ async function renderAlbum(focusId){const body=albumOv.querySelector('.dr-body')
  body.innerHTML=`<h2>Fotobuch</h2>${inner}<div class="dr-pager"><button class="dr-btn alt prev" ${page===0?'disabled style="opacity:.4"':''}>‹</button><span>${page===0?'Titel':`Seite ${page} von ${done.length}`}</span><button class="dr-btn alt next" ${page>=done.length?'disabled style="opacity:.4"':''}>›</button></div>${note()}`;
  body.querySelector('.prev').onclick=()=>{page--;renderAlbum()};body.querySelector('.next').onclick=()=>{page++;renderAlbum()};
  const inp=body.querySelector('input[type=file]');if(inp)inp.onchange=async()=>{const n=body.querySelector('.up');try{n.textContent='Fotos werden eingeklebt …';const blobs=[];for(const f of inp.files)blobs.push(await shrink(f));await store.addPhotos(done[page-1].id,blobs);renderAlbum()}catch(e){n.textContent='Hat nicht geklappt: '+e.message}}}
-ready.then(announce);
+ready.then(announce);window.addEventListener('rr-dates-auth',()=>announce());
