@@ -102,7 +102,9 @@ async function supabaseBackend(){
   async letters(){const {data,error}=await sb.from(M).select('*').order('created_at');if(error)throw error;return data},
   async sendLetter(von,an,text){const {error}=await sb.from(M).insert({von,an,text});if(error)throw error},
   async markRead(ids){if(ids.length)await sb.from(M).update({gelesen:true}).in('id',ids)},
-  async roomPhoto(){return signed('raum/lieblingsbild.jpg')}};
+  async roomPhoto(){return signed('raum/lieblingsbild.jpg')},
+  async setRoomPhoto(blob){const p='raum/lieblingsbild.jpg';let up=await sb.storage.from(B).upload(p,blob,{contentType:'image/jpeg',upsert:true});
+   if(up.error){await sb.storage.from(B).remove([p]);up=await sb.storage.from(B).upload(p,blob,{contentType:'image/jpeg'})}if(up.error)throw up.error}};
 }
 let store=local;const ready=(async()=>{try{const s=await supabaseBackend();if(s)store=s}catch(e){console.warn('Supabase nicht erreichbar, nutze Handy-Speicher',e)}})();
 export async function roomPhotoUrl(){await ready;try{return await store.roomPhoto()}catch{return null}}
@@ -209,6 +211,20 @@ async function renderMail(write=false){const body=mailOv.querySelector('.dr-body
  <button class="dr-btn" style="width:100%">Brief an ${other} schreiben ✍️</button>
  <div class="dr-list">${letters.map(l=>`<div class="dr-letter ${l.von===me?'me':''} ${l.an===me&&!l.gelesen?'new':''}"><small>${l.von===me?'Du an '+esc(l.an):'Von '+esc(l.von)} · ${fmt(l.created_at)}</small><p>${esc(l.text)}</p></div>`).join('')||'<div class="dr-note">Noch keine Briefe. Schreib den ersten!</div>'}</div>${note()}`;
  body.querySelector('.dr-btn').onclick=()=>renderMail(true);store.markRead(unread.map(l=>l.id)).catch(()=>{})}
+
+// ---------------- favourite photo in the heart frame ----------------
+const heartOv=overlay('heart');
+export async function openRoomPhoto(){await ready;open(heartOv);renderHeart()}
+async function renderHeart(){const body=heartOv.querySelector('.dr-body');if(await needLogin(body,renderHeart))return;
+ if(!store.setRoomPhoto){body.innerHTML='<h2>Lieblingsbild</h2><p class="sub">Das geht erst, wenn Supabase verbunden ist.</p>';return}
+ const cur=await store.roomPhoto().catch(()=>null);let file=null;
+ body.innerHTML=`<h2>Lieblingsbild</h2><p class="sub">Das Foto im Herz über dem Sofa. Am schönsten, wenn eure Gesichter in der Mitte sind.</p>
+ <div class="dr-photos" style="grid-template-columns:1fr"><img class="pv" src="${cur||''}" alt="" style="${cur?'':'display:none'}"></div>${cur?'':'<div class="dr-empty">Noch kein Bild hochgeladen.</div>'}
+ <label class="dr-btn turq" style="display:block;text-align:center;margin-top:10px">📷 Foto auswählen<input type="file" accept="image/*" hidden></label>
+ <button class="dr-btn save" style="width:100%;margin-top:8px" disabled>Ins Herz hängen 💗</button><div class="dr-note msg"></div>${note()}`;
+ const inp=body.querySelector('input'),pv=body.querySelector('.pv'),save=body.querySelector('.save'),msg=body.querySelector('.msg');
+ inp.onchange=()=>{file=inp.files[0];if(!file)return;pv.src=URL.createObjectURL(file);pv.style.display='';body.querySelector('.dr-empty')?.remove();save.disabled=false};
+ save.onclick=async()=>{save.disabled=true;msg.textContent='Wird hochgeladen …';try{await store.setRoomPhoto(await shrink(file));msg.textContent='Hängt im Herz! 💗';window.dispatchEvent(new CustomEvent('rr-dates-auth',{detail:{loggedIn:true}}));setTimeout(()=>close(heartOv),900)}catch(e){save.disabled=false;msg.textContent='Hochladen hat nicht geklappt: '+e.message}}}
 
 // ---------------- photo album ----------------
 const albumOv=overlay('album');let page=0;

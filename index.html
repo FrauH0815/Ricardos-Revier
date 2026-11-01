@@ -7,7 +7,8 @@
 #gamePick .x{background:#2a3036;color:#ddd;border-color:#ffffff30}
 #gameFrame{position:fixed;inset:0;z-index:30;display:none;background:#000}#gameFrame.on{display:block}#gameFrame iframe{width:100%;height:100%;border:0}
 #gameFrame .close{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 12px);z-index:31;padding:9px 14px;font-size:12px}
-</style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div><button id="gamesBtn">🎮 SPIELE</button>
+#wip{display:inline-block;margin-top:6px;padding:5px 11px;border-radius:14px;background:#10182099;border:1px solid #e7b47e66;color:#f1d2ad;font-size:11px;letter-spacing:.04em;backdrop-filter:blur(8px);text-shadow:none;transition:opacity .4s,font-size .4s}#wip.small{font-size:9px;opacity:.65;padding:3px 8px}
+</style></head><body><div id="ui"><header><div><h1>RICARDOS REVIER</h1><div id="wip">🛠️ Im Aufbau · wird Stück für Stück erweitert</div></div></header><footer><button id="door">ROLLTOR ÖFFNEN ↑</button><div id="help">Mit dem Finger die Perspektive leicht verändern</div></footer></div><div id="progress"></div><button id="gamesBtn">🎮 SPIELE</button>
 <div id="gamePick"><div class="panel"><h2>SPIELE</h2>
 <button class="g" data-g="angeln"><b>🎣 Angeln</b><small>Dorfteich, großer See, Fluss am Abend</small></button>
 <button class="g" data-g="kegeln"><b>🎳 Kegeln</b><small>Übungsbahn bis Meisterschaft</small></button>
@@ -193,7 +194,7 @@ box(2.24,2.3,.012,0,1.2,.225,new THREE.MeshPhysicalMaterial({color:0xffffff,roug
 // TV shows the game menu; tapping the games button opens it.
 {const c=document.createElement('canvas');c.width=1024;c.height=576;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,1024,576);gr.addColorStop(0,'#0f2233');gr.addColorStop(1,'#2a1430');g.fillStyle=gr;g.fillRect(0,0,1024,576);
  g.textAlign='center';g.fillStyle='#ffd9a8';g.font='900 64px system-ui,Arial';g.fillText('RICARDOS SPIELE',512,120);
- [['🎣','ANGELN'],['🎳','KEGELN'],['🎯','JAGD']].forEach(([e,t],i)=>{const x=200+i*312;g.fillStyle='#ffffff14';g.fillRect(x-130,180,260,300);g.font='110px system-ui';g.fillText(e,x,340);g.fillStyle='#f3ebdf';g.font='800 36px system-ui,Arial';g.fillText(t,x,440)});
+ [['🎣','ANGELN'],['🎳','KEGELN'],['🃏','POKER'],['🎯','JAGD']].forEach(([e,t],i)=>{const x=143+i*246;g.fillStyle='#ffffff14';g.fillRect(x-108,180,216,290);g.font='96px system-ui';g.fillText(e,x,330);g.fillStyle='#f3ebdf';g.font='800 32px system-ui,Arial';g.fillText(t,x,430)});
  g.fillStyle='#ffd9a8';g.font='700 30px system-ui,Arial';g.fillText('▶  Bildschirm antippen zum Spielen',512,535);
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;tvScreen.map=t;tvScreen.emissiveMap=t;tvScreen.emissive.set(0xffffff);tvScreen.emissiveIntensity=.55;tvScreen.color.set(0x000000);tvScreen.needsUpdate=true}
 // Trophies won in the games stand in the cabinet as golden cups.
@@ -710,7 +711,7 @@ let lidTarget=0,lidAngle=0;addEventListener('rr-dates-ui',e=>{if(e.detail.kind==
 // Walking limits inside the room
 const room2Obstacles=[[0,-35.9,2.7,1.1],[-2.2,-34.6,.6,.7],[2.2,-34.6,.6,.7],[0,-31.9,.95,.5],[0,-30.55,1.2,.4],[-3.6,-30.9,.55,.5],[-4.9,-26.3,.35,.4],[5.5,-34.6,.4,.85],[3.55,-35.3,.3,.3],[-5.35,-36.35,.35,.35]];
 // Things you can tap in the Barbie room
-const roomTaps=[[wheel,'wheel'],[dateBox,'wheel'],[mailbox,'mail'],[album,'album']];
+const roomTaps=[[wheel,'wheel'],[dateBox,'wheel'],[mailbox,'mail'],[album,'album'],[heart,'heart']];
 
 kit.build();
 
@@ -832,7 +833,7 @@ function openThing(what){touchWalk=0;strafeTouch=0;
  else if(what==='games')gamePick.classList.add('on');
  else if(what==='door')toggleDoor();
  else if(what==='car')detail?.enter();
- else datesUI.then(m=>({wheel:m.openDateBox,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
+ else datesUI.then(m=>({wheel:m.openDateBox,mail:m.openMailbox,album:m.openAlbum,heart:m.openRoomPhoto})[what]()).catch(err=>console.error(err))}
 function releasePointer(e){
  const p=fingers.get(e.pointerId);if(!p)return;
  if(e.type==='pointerup'&&inside&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<14&&performance.now()-p.t<400){const what=tappedThing(e);if(what)openThing(what)}
@@ -861,7 +862,7 @@ function animate(now){requestAnimationFrame(animate);
 if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
  slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
  bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
- document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);inside=entry>.85;gamesBtn.classList.toggle('on',inside);
+ document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);inside=entry>.85;gamesBtn.classList.toggle('on',inside);document.getElementById('wip').classList.toggle('small',inside);
 // Frame-rate-independent damped camera and walking velocity.
 const turnBlend=1-Math.exp(-22*dt);
 const stepX=lookDX*turnBlend,stepY=lookDY*turnBlend;
