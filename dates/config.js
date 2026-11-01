@@ -5,3 +5,5 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ttorkE5nyhmXQ2ZTlHIu-g_X
 export const DATE_IDEAS_TABLE = 'ricardo_date_ideas';
 export const DATE_MESSAGES_TABLE = 'ricardo_date_messages';
 export const DATE_PHOTOS_BUCKET = 'ricardo-date-photos';
+
+export const DATES_READY = true;
