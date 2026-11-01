@@ -21,6 +21,7 @@ import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUnifo
 RectAreaLightUniformsLib.init();
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { setupDetailing } from './werkstatt/aufbereitung.js';
 import { toCreasedNormals, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -401,6 +402,7 @@ wood.color.set('#5c3a26');wood.roughness=.55;
 
 // Real 3D models (CC0 / CC-BY, see assets/sources.json), meshopt-compressed for phones.
 const gltf=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+let detail=null;
 function place(url,x,y,z,rotY=0,scale=1,parent=interior){
  return gltf.loadAsync(url).then(g=>{const o=g.scene;o.position.set(x,y,z);o.rotation.y=rotY;o.scale.setScalar(scale);
   o.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;if(c.material)c.material.envMapIntensity=1}});parent.add(o);return o});
@@ -409,7 +411,13 @@ const floorTop=.18;
 const models=Promise.allSettled([
  place('./assets/models/ram.glb',-5.2,floorTop+.957,-5.935,0,1).then(o=>{car.visible=false;
   // Low-poly game model: smooth the faceted panels, keep hard creases sharp.
-  o.traverse(c=>{if(c.isMesh)c.geometry=toCreasedNormals(c.geometry,Math.PI/5)})}), // Ricardo's orange RAM 1500
+  o.traverse(c=>{if(c.isMesh)c.geometry=toCreasedNormals(c.geometry,Math.PI/5)});
+  // Tap the RAM to detail it: wet, foam, rinse, polish.
+  detail=setupDetailing({THREE,camera,renderer,scene,car:o,floorY:floorTop,
+   onEnter:()=>{document.getElementById('ui').style.visibility='hidden';gamesBtn.style.visibility='hidden';touchWalk=0;strafeTouch=0;velocityX=velocityZ=0},
+   onExit:()=>{document.getElementById('ui').style.visibility='';gamesBtn.style.visibility=''},
+   onTrophy:(id,title)=>{let all=[];try{all=JSON.parse(localStorage.getItem('rr_trophies')||'[]')}catch{}const key='werkstatt:'+id;if(!all.some(t=>t.key===key)){all.push({key,game:'werkstatt',title,date:new Date().toISOString()});try{localStorage.setItem('rr_trophies',JSON.stringify(all))}catch{}placeTrophies()}}});
+  tapTargets.push([o,'car'])}), // Ricardo's orange RAM 1500
  place('./assets/models/sofa.glb',-6.55,floorTop,-19.8,-Math.PI/2,1.15), // faces the TV
  place('./assets/models/sofa.glb',-8.4,floorTop,-23.15,0,1.05),
  place('./assets/models/chair.glb',-8.45,floorTop,-16.9,Math.PI,1.25).then(o=>o.traverse(c=>{if(c.isMesh&&/fabric/i.test(c.material.name)){c.material.color.set('#8a5a3a');if(c.material.sheenColor)c.material.sheenColor.set('#c08a5a')}}))
@@ -767,7 +775,7 @@ document.getElementById('frameClose').onclick=()=>{gameFrame.classList.remove('o
 function setGoal(value){goal=value;btn.textContent=value?'ROLLTOR SCHLIESSEN ↓':'ROLLTOR ÖFFNEN ↑';btn.setAttribute('aria-expanded',String(!!value))}
 btn.onclick=()=>setGoal(goal===0?1:0);
 help.textContent='Materialien werden geladen …';
-Promise.all([ready,workshopMaterials,models]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Linke Hälfte: sanft ziehen zum Gehen · rechte Hälfte: umsehen';window.garageAssetsReady=!failed;garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
+Promise.all([ready,workshopMaterials,models]).then(groups=>{const results=groups.flat();const failed=results.some(r=>r.status==='rejected');help.textContent=failed?'Ein Material fehlt. Bitte die Seite neu laden.':'Links ziehen: gehen · rechts ziehen: umsehen · RAM, Fernseher und Türen antippen';window.garageAssetsReady=!failed;garageAssetsReady=!failed;results.forEach(r=>{if(r.status==='rejected')console.error('Material konnte nicht geladen werden',r.reason)})});
 // Full 360-degree first-person looking, with vertical tilt. A vertical swipe
 // only controls the roller door while it is closed; once inside, all swipes look.
 let yaw=0,pitch=0,inside=false;const walker=new THREE.Vector3(0,1.78,-3.1);const moveKeys=new Set();let touchWalk=0;
@@ -776,6 +784,7 @@ addEventListener('keydown',e=>{const k={KeyW:'forward',ArrowUp:'forward',KeyS:'b
 // Both fingers can be held at once. Keyboard WASD remains supported.
 const fingers=new Map();let walkOrigin=null,lookPointer=null,strafeTouch=0,velocityX=0,velocityZ=0,lookDX=0,lookDY=0;
 renderer.domElement.addEventListener('pointerdown',e=>{
+ if(window.__detailing)return;
  e.preventDefault();renderer.domElement.setPointerCapture(e.pointerId);
  const kind=inside?(e.clientX<innerWidth*.48?'move':'look'):'gate';
  const data={kind,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,t:performance.now()};
@@ -784,6 +793,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  if(kind==='look')lookPointer=e.pointerId;
 });
 renderer.domElement.addEventListener('pointermove',e=>{
+ if(window.__detailing)return;
  const p=fingers.get(e.pointerId);if(!p)return;e.preventDefault();
  const dx=e.clientX-p.lastX,dy=e.clientY-p.lastY;
  if(p.kind==='move'){
@@ -814,6 +824,7 @@ const datesUI=import('./dates/dates.js');
 function openThing(what){touchWalk=0;strafeTouch=0;
  if(what==='games')gamePick.classList.add('on');
  else if(what==='door')toggleDoor();
+ else if(what==='car')detail?.enter();
  else datesUI.then(m=>({wheel:m.openDateBox,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
 function releasePointer(e){
  const p=fingers.get(e.pointerId);if(!p)return;
@@ -838,7 +849,9 @@ function resize(){renderer.setSize(innerWidth,innerHeight);composer.setSize(inne
 function animate(now){requestAnimationFrame(animate);
  // While a date-room window covers the screen, pause the 3D scene (smoother UI, less battery).
  if(window.__drOpen){last=now;return}
- const dt=Math.min((now-last)/1000,.05);last=now;if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
+ const dt=Math.min((now-last)/1000,.05);last=now;
+ if(window.__detailing&&detail){camera.fov=52;camera.updateProjectionMatrix();detail.update(dt);composer.render();return}
+if(!dragGate)amount+=(goal-amount)*(1-Math.exp(-2.3*dt));
  slats.forEach((g,i)=>{const h=.47+i*.225+amount*6.4,above=h-5.85;if(above<=0){g.position.set(0,h,0);g.rotation.x=0}else{const angle=above/.64;g.position.set(0,5.85+.64*Math.sin(angle),-.64+.64*Math.cos(angle));g.rotation.x=-angle}g.visible=h<7.7});
  bottomRail.position.y=.34+Math.min(amount*6.4,5.6);grip.position.y=.49+Math.min(amount*6.4,5.45);bottomRail.visible=grip.visible=amount<.9;
  document.getElementById('progress').style.width=amount*100+'%';const distance=innerWidth<innerHeight?27:24,entry=Math.max(0,(amount-.65)/.35);inside=entry>.85;gamesBtn.classList.toggle('on',inside);
