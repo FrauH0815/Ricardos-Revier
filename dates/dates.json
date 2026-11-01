@@ -1,0 +1,507 @@
+{
+ "hinweis": "Hier stehen alle Date-Ideen. Felder: id (eindeutig), titel, text. Neue Ideen einfach hinten anfügen.",
+ "zwei": [
+  {
+   "id": "z01",
+   "titel": "Picknick bei Sonnenuntergang",
+   "text": "Decke, Lieblingssnacks und ein Platz mit Aussicht."
+  },
+  {
+   "id": "z02",
+   "titel": "Kochabend mit neuem Rezept",
+   "text": "Ein Gericht, das keiner von euch je gekocht hat."
+  },
+  {
+   "id": "z03",
+   "titel": "Sterne gucken",
+   "text": "Decke, Tee, Sternbilder-App und Kuscheln."
+  },
+  {
+   "id": "z04",
+   "titel": "Kinoabend zu Hause",
+   "text": "Mit Popcorn-Bar und Film, den der andere aussucht."
+  },
+  {
+   "id": "z05",
+   "titel": "Frühstück im Bett",
+   "text": "Einer macht's, der andere bleibt liegen. Nächstes Mal tauschen."
+  },
+  {
+   "id": "z06",
+   "titel": "Thermentag",
+   "text": "Einen ganzen Tag Wellness und Sauna."
+  },
+  {
+   "id": "z07",
+   "titel": "Roadtrip ohne Ziel",
+   "text": "Ins Auto setzen, Münze werfen an jeder Kreuzung."
+  },
+  {
+   "id": "z08",
+   "titel": "Tanzabend im Wohnzimmer",
+   "text": "Eure Hochzeitslieder und alles, was dazu passt."
+  },
+  {
+   "id": "z09",
+   "titel": "Brunch im Lieblingscafé",
+   "text": "Ganz ohne Zeitdruck."
+  },
+  {
+   "id": "z10",
+   "titel": "Zusammen ein Bild malen",
+   "text": "Eine Leinwand, jeder malt eine Hälfte."
+  },
+  {
+   "id": "z11",
+   "titel": "Verkostungsabend",
+   "text": "Wein, Bier oder Schokolade blind probieren."
+  },
+  {
+   "id": "z12",
+   "titel": "Lagerfeuer mit Stockbrot",
+   "text": "Dazu Musik und eine Decke."
+  },
+  {
+   "id": "z13",
+   "titel": "Escape Room",
+   "text": "Zeigt, wie gut ihr als Team seid."
+  },
+  {
+   "id": "z14",
+   "titel": "Bowling",
+   "text": "Verlierer zahlt das Essen danach."
+  },
+  {
+   "id": "z15",
+   "titel": "Minigolf",
+   "text": "Mit kleinem Wetteinsatz."
+  },
+  {
+   "id": "z16",
+   "titel": "Massageabend",
+   "text": "Gegenseitig, mit Öl und Kerzen."
+  },
+  {
+   "id": "z17",
+   "titel": "Fotoshooting zu zweit",
+   "text": "Irgendwo Schönes, mit Selbstauslöser."
+  },
+  {
+   "id": "z18",
+   "titel": "Wanderung mit Picknick",
+   "text": "Eine Strecke, die ihr noch nicht kennt."
+  },
+  {
+   "id": "z19",
+   "titel": "Erinnerungsabend",
+   "text": "Alte Fotos und Videos von euch anschauen."
+  },
+  {
+   "id": "z20",
+   "titel": "Karaokeabend",
+   "text": "Mindestens ein Duett ist Pflicht."
+  },
+  {
+   "id": "z21",
+   "titel": "Raclette oder Fondue zu zweit",
+   "text": "Ganz in Ruhe, mit Kerzen."
+  },
+  {
+   "id": "z22",
+   "titel": "Freizeitpark",
+   "text": "Achterbahn und Zuckerwatte."
+  },
+  {
+   "id": "z23",
+   "titel": "Schlittschuhlaufen",
+   "text": "Händchenhalten erlaubt, Festhalten auch."
+  },
+  {
+   "id": "z24",
+   "titel": "Tretboot oder Bootstour",
+   "text": "Auf einem See in der Nähe."
+  },
+  {
+   "id": "z25",
+   "titel": "Kochkurs",
+   "text": "Zusammen etwas Neues lernen."
+  },
+  {
+   "id": "z26",
+   "titel": "Konzert oder Comedy-Show",
+   "text": "Tickets für etwas, das euch beiden gefällt."
+  },
+  {
+   "id": "z27",
+   "titel": "Spieleabend mit Einsatz",
+   "text": "Wer verliert, erfüllt einen Wunsch."
+  },
+  {
+   "id": "z28",
+   "titel": "Sonnenaufgang anschauen",
+   "text": "Früh raus, Kaffee in der Thermoskanne."
+  },
+  {
+   "id": "z29",
+   "titel": "Eine Nacht im Hotel",
+   "text": "Gar nicht weit weg, einfach mal raus."
+  },
+  {
+   "id": "z30",
+   "titel": "Eine Nacht im Wohnwagen",
+   "text": "Mit Lichterkette und Gaskocher."
+  },
+  {
+   "id": "z31",
+   "titel": "Flohmarkt-Challenge",
+   "text": "Jeder kauft dem anderen etwas für höchstens 10 €."
+  },
+  {
+   "id": "z32",
+   "titel": "Outfits füreinander aussuchen",
+   "text": "Und so dann ausgehen."
+  },
+  {
+   "id": "z33",
+   "titel": "Burgerabend",
+   "text": "Alles selbst gemacht, vom Patty bis zur Soße."
+  },
+  {
+   "id": "z34",
+   "titel": "Fahrradtour mit Eisstopp",
+   "text": "Das Eis ist das Ziel."
+  },
+  {
+   "id": "z35",
+   "titel": "Zoo oder Wildpark",
+   "text": "Jeder sucht sein Lieblingstier."
+  },
+  {
+   "id": "z36",
+   "titel": "Liebesbriefe",
+   "text": "Schreiben und euch gegenseitig vorlesen."
+  },
+  {
+   "id": "z37",
+   "titel": "Museum oder Ausstellung",
+   "text": "Etwas, wo ihr noch nie wart."
+  },
+  {
+   "id": "z38",
+   "titel": "Pizza mit Aussicht",
+   "text": "Zum Mitnehmen holen und im Auto an einem schönen Ort essen."
+  },
+  {
+   "id": "z39",
+   "titel": "Wellnessabend zu Hause",
+   "text": "Badewanne, Gesichtsmasken, Lieblingsmusik."
+  },
+  {
+   "id": "z40",
+   "titel": "Zeichenabend",
+   "text": "Ihr zeichnet euch gegenseitig."
+  },
+  {
+   "id": "z41",
+   "titel": "Cocktailabend",
+   "text": "Eigene Drinks erfinden und benennen."
+  },
+  {
+   "id": "z42",
+   "titel": "Autokino",
+   "text": "Mit Snacks und Decke im Auto."
+  },
+  {
+   "id": "z43",
+   "titel": "Kartbahn",
+   "text": "Wer ist schneller?"
+  },
+  {
+   "id": "z44",
+   "titel": "Kletterwald",
+   "text": "Ein bisschen Nervenkitzel zu zweit."
+  },
+  {
+   "id": "z45",
+   "titel": "Mitternachtssauna",
+   "text": "Oder ein Abendschwimmen."
+  },
+  {
+   "id": "z46",
+   "titel": "Weihnachtsmarkt",
+   "text": "Glühwein, Lichter, Bummeln (für die Winterzeit)."
+  },
+  {
+   "id": "z47",
+   "titel": "Frühstück am Aussichtspunkt",
+   "text": "Brötchen holen und mit Blick essen."
+  },
+  {
+   "id": "z48",
+   "titel": "Gemeinsam etwas bauen",
+   "text": "Ein kleines Projekt in der Werkstatt."
+  },
+  {
+   "id": "z49",
+   "titel": "Fotospaziergang durch eine fremde Stadt",
+   "text": "Jeder macht 10 Bilder vom anderen."
+  },
+  {
+   "id": "z50",
+   "titel": "Tag am See",
+   "text": "Baden, Liegen, Nichtstun."
+  },
+  {
+   "id": "z51",
+   "titel": "Videospielabend",
+   "text": "Mit Snacks und Revanche."
+  },
+  {
+   "id": "z52",
+   "titel": "Gemeinsame Bucket List",
+   "text": "Aufschreiben, was ihr noch alles erleben wollt."
+  },
+  {
+   "id": "z53",
+   "titel": "Pralinen selber machen",
+   "text": "Und gleich vernaschen."
+  },
+  {
+   "id": "z54",
+   "titel": "Blindverkostung",
+   "text": "Chips, Schokolade, Gummibärchen: Wer erkennt mehr?"
+  },
+  {
+   "id": "z55",
+   "titel": "Tanzkurs",
+   "text": "Ein Schnupperkurs reicht für den Anfang."
+  },
+  {
+   "id": "z56",
+   "titel": "Sushi selber rollen",
+   "text": "Auch wenn's schief wird."
+  },
+  {
+   "id": "z57",
+   "titel": "Neue Stadt erkunden",
+   "text": "Ein Tagesausflug irgendwohin, wo ihr noch nie wart."
+  },
+  {
+   "id": "z58",
+   "titel": "Serienmarathon",
+   "text": "Kuscheldecke und eure Lieblingsserie."
+  },
+  {
+   "id": "z59",
+   "titel": "Ein Tag ohne Handy",
+   "text": "Nur ihr zwei."
+  },
+  {
+   "id": "z60",
+   "titel": "Zurück an einen besonderen Ort",
+   "text": "Wo ihr euch kennengelernt oder geheiratet habt."
+  }
+ ],
+ "kinder": [
+  {
+   "id": "k01",
+   "titel": "Pyjama-Kinoabend",
+   "text": "Matratzenlager im Wohnzimmer und Popcorn."
+  },
+  {
+   "id": "k02",
+   "titel": "Picknick im Park",
+   "text": "Mit Ball und Frisbee."
+  },
+  {
+   "id": "k03",
+   "titel": "Zoo oder Tierpark",
+   "text": "Jeder sucht sein Lieblingstier."
+  },
+  {
+   "id": "k04",
+   "titel": "Spaßbad",
+   "text": "Rutschen bis die Finger schrumpelig sind."
+  },
+  {
+   "id": "k05",
+   "titel": "Pizza selber belegen",
+   "text": "Jeder seine eigene."
+  },
+  {
+   "id": "k06",
+   "titel": "Schatzsuche",
+   "text": "Mit Hinweisen im Garten oder in der Wohnung."
+  },
+  {
+   "id": "k07",
+   "titel": "Kekse backen und verzieren",
+   "text": "So bunt wie möglich."
+  },
+  {
+   "id": "k08",
+   "titel": "Fahrradtour mit Eis",
+   "text": "Das Eis ist das Ziel."
+  },
+  {
+   "id": "k09",
+   "titel": "Deckenburg bauen",
+   "text": "Und drin Geschichten erzählen."
+  },
+  {
+   "id": "k10",
+   "titel": "Naturbingo im Wald",
+   "text": "Wer findet zuerst Zapfen, Feder, Pilz …"
+  },
+  {
+   "id": "k11",
+   "titel": "Spielplatz-Tour",
+   "text": "Drei Spielplätze an einem Tag."
+  },
+  {
+   "id": "k12",
+   "titel": "Minigolf",
+   "text": "Familienturnier."
+  },
+  {
+   "id": "k13",
+   "titel": "Bowling",
+   "text": "Mit Banden für die Kleinen."
+  },
+  {
+   "id": "k14",
+   "titel": "Freizeitpark",
+   "text": "Ein ganzer Tag Action."
+  },
+  {
+   "id": "k15",
+   "titel": "Lagerfeuer mit Stockbrot",
+   "text": "Und Marshmallows."
+  },
+  {
+   "id": "k16",
+   "titel": "Zelten im Garten",
+   "text": "Mit Taschenlampe und Gruselgeschichten."
+  },
+  {
+   "id": "k17",
+   "titel": "Bastelnachmittag",
+   "text": "Etwas basteln, das ihr aufhängt."
+  },
+  {
+   "id": "k18",
+   "titel": "Familien-Spieleabend",
+   "text": "Jeder darf ein Spiel aussuchen."
+  },
+  {
+   "id": "k19",
+   "titel": "Theater oder Puppentheater",
+   "text": "Oder ein Kinderkonzert."
+  },
+  {
+   "id": "k20",
+   "titel": "Bauernhof besuchen",
+   "text": "Tiere streicheln, vielleicht melken."
+  },
+  {
+   "id": "k21",
+   "titel": "Drachen steigen lassen",
+   "text": "An einem windigen Tag."
+  },
+  {
+   "id": "k22",
+   "titel": "Sterne gucken",
+   "text": "Mit Decke und Kakao."
+  },
+  {
+   "id": "k23",
+   "titel": "Mitmach-Museum",
+   "text": "Ausprobieren statt nur Anschauen."
+  },
+  {
+   "id": "k24",
+   "titel": "Die Kinder planen den Tag",
+   "text": "Ihr macht mit, was sie sagen (fast alles)."
+  },
+  {
+   "id": "k25",
+   "titel": "Pfannkuchen-Frühstück",
+   "text": "Mit Gesichtern aus Obst."
+  },
+  {
+   "id": "k26",
+   "titel": "Disco im Wohnzimmer",
+   "text": "Licht aus, Musik an."
+  },
+  {
+   "id": "k27",
+   "titel": "Schnee-Tag",
+   "text": "Schlitten fahren und Schneemann bauen (im Winter)."
+  },
+  {
+   "id": "k28",
+   "titel": "Wasserschlacht",
+   "text": "Im Garten (im Sommer)."
+  },
+  {
+   "id": "k29",
+   "titel": "Familien-Fotoshooting",
+   "text": "Mit lustigen Verkleidungen."
+  },
+  {
+   "id": "k30",
+   "titel": "Pflanzen säen",
+   "text": "Kräuter oder Blumen, die ihr dann beobachtet."
+  },
+  {
+   "id": "k31",
+   "titel": "Trampolin- oder Kletterhalle",
+   "text": "Austoben."
+  },
+  {
+   "id": "k32",
+   "titel": "Ausflug mit dem Zug",
+   "text": "Irgendwohin, die Fahrt ist das Abenteuer."
+  },
+  {
+   "id": "k33",
+   "titel": "Werkstatt-Tag bei Papa",
+   "text": "Zusammen etwas bauen oder reparieren."
+  },
+  {
+   "id": "k34",
+   "titel": "Wildpark",
+   "text": "Tiere füttern."
+  },
+  {
+   "id": "k35",
+   "titel": "Familien-Olympiade",
+   "text": "Sackhüpfen, Eierlauf, Siegerehrung."
+  },
+  {
+   "id": "k36",
+   "titel": "Kino",
+   "text": "Mit großem Popcorn."
+  },
+  {
+   "id": "k37",
+   "titel": "Burg erkunden",
+   "text": "Ritter und Prinzessinnen gesucht."
+  },
+  {
+   "id": "k38",
+   "titel": "Wohnwagen-Übernachtung",
+   "text": "Abenteuer vor der Haustür."
+  },
+  {
+   "id": "k39",
+   "titel": "Badesee-Tag",
+   "text": "Sandburgen und Schwimmen."
+  },
+  {
+   "id": "k40",
+   "titel": "Zeitkapsel",
+   "text": "Basteln, befüllen und vergraben."
+  }
+ ]
+}

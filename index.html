@@ -269,51 +269,6 @@ const openDoor=new THREE.Group();openDoor.position.set(1.12,0,-24.82);openDoor.r
 box(2.12,2.95,.09,-1.06,1.52,0,mat('#eee2e8',.55),openDoor);
 box(.09,.09,.15,-1.88,1.35,.1,chrome,openDoor);
 
-// ROOM TWO: warm, playful pink-and-white private date room, connected behind garage.
-const dateRoom=new THREE.Group();interior.add(dateRoom);
-const pinkWall=mat('#f3c8db',.95),whiteWall=mat('#fff4f7',.91),rose=mat('#df79ab',.76),blush=mat('#f8a9c9',.9),turquoise=mat('#7ac8c8',.5),cream=mat('#fff6f0',.8),goldPink=mat('#e2a4ba',.35,.65);
-box(12,.2,12,0,.08,-31.0,cream,dateRoom);
-box(12,.18,12,0,4.7,-31,whiteWall,dateRoom);
-box(.16,4.65,12,-6,2.38,-31,pinkWall,dateRoom);
-box(.16,4.65,12,6,2.38,-31,pinkWall,dateRoom);
-box(12,4.65,.16,0,2.38,-37,pinkWall,dateRoom);
-// Front wall continues the garage rear wall, leaving the door opening.
-box(4.9,4.65,.16,-3.55,2.38,-25,whiteWall,dateRoom);
-box(4.9,4.65,.16,3.55,2.38,-25,whiteWall,dateRoom);
-box(2.2,1.6,.16,0,3.85,-25,whiteWall,dateRoom);
-// Ceiling light and pink ambient illumination.
-const roomLight=new THREE.PointLight(0xffd6e8,58,17,1.8);roomLight.position.set(0,4.2,-31);dateRoom.add(roomLight);
-const lamp=new THREE.Mesh(new THREE.SphereGeometry(.42,24,16),new THREE.MeshStandardMaterial({color:0xfff5fa,emissive:0xffd5ec,emissiveIntensity:1.8}));lamp.position.set(0,4.25,-31);dateRoom.add(lamp);
-// Soft pink sofa against the rear wall, including back and rounded cushions.
-box(4.2,.52,1.35,0,.65,-35.65,rose,dateRoom);
-box(4.2,1.05,.34,0,1.18,-36.27,blush,dateRoom);
-for(const x of [-1.9,1.9])box(.36,.85,1.4,x,.88,-35.65,rose,dateRoom);
-for(const x of [-1.15,0,1.15])box(1.08,.2,1.08,x,.99,-35.55,blush,dateRoom);
-// Fluffy-style layered rug and small central table with a physical date box.
-box(5.6,.045,3.4,0,.17,-32.65,mat('#f5dce8',1),dateRoom);
-box(2.05,.11,1.15,0,.68,-32.1,whiteWall,dateRoom);
-for(const x of [-.83,.83])for(const z of [-32.52,-31.68])box(.11,.48,.11,x,.39,z,goldPink,dateRoom);
-box(.78,.42,.53,0,.97,-32.1,rose,dateRoom);
-box(.83,.07,.58,0,1.21,-32.1,cream,dateRoom);
-// Date-box label is a texture, not an interactive function yet.
-function roomLabel(message,w=512,h=180){
- const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');
- ctx.clearRect(0,0,w,h);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#713b5b';ctx.font='bold 46px system-ui';ctx.fillText(message,w/2,h/2);
- const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,transparent:true,side:THREE.DoubleSide});
-}
-const dateSign=new THREE.Mesh(new THREE.PlaneGeometry(.7,.25),roomLabel('100 DATES'));dateSign.rotation.x=-Math.PI/2;dateSign.position.set(0,1.251,-32.1);dateRoom.add(dateSign);
-// Exactly one wedding photo frame; neutral placeholder until the real photo is provided.
-box(2.35,1.9,.13,-3.1,2.7,-36.85,cream,dateRoom);
-box(2.06,1.61,.03,-3.1,2.7,-36.76,mat('#d4b3be',.9),dateRoom);
-const weddingLabel=new THREE.Mesh(new THREE.PlaneGeometry(1.8,.5),roomLabel('UNSER FOTO'));weddingLabel.position.set(-3.1,2.7,-36.735);dateRoom.add(weddingLabel);
-// Digital album stand and letterbox: visual models, interactions to follow.
-box(1.85,1.05,.5,3.75,.69,-35.75,cream,dateRoom);
-box(1.3,.95,.1,3.75,1.58,-35.83,turquoise,dateRoom);
-const albumText=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.37),roomLabel('ALBUM'));albumText.position.set(3.75,1.58,-35.765);dateRoom.add(albumText);
-box(1.15,1.05,.42,-4.35,1.25,-29.7,rose,dateRoom);
-box(1.24,.15,.52,-4.35,1.82,-29.7,cream,dateRoom);
-box(.78,.055,.035,-4.35,1.53,-29.46,mat('#824c65'),dateRoom);
-const mailText=new THREE.Mesh(new THREE.PlaneGeometry(1.05,.31),roomLabel('POST'));mailText.position.set(-4.35,1.16,-29.475);dateRoom.add(mailText);
 // Pickup and work area have ample walking clearance
 // Pickup: Fahrzeugkörper, Fahrerkabine, Reifen, Kühler, Licht
 const car=new THREE.Group();interior.add(car);car.position.set(-5.2,.05,-5.8);car.scale.setScalar(1.18);
@@ -564,6 +519,156 @@ const hand=(len,w,col,zz)=>{const h=new THREE.Mesh(new THREE.BoxGeometry(w,len,.
 const hHand=hand(.22,.025,0x111111,.01),mHand=hand(.33,.018,0x111111,.02),sHand=hand(.36,.006,0xc0201a,.03);
 function tick(){const d=new Date(),s=d.getSeconds(),m=d.getMinutes()+s/60,h=d.getHours()%12+m/60;sHand.rotation.z=-s/60*Math.PI*2;mHand.rotation.z=-m/60*Math.PI*2;hHand.rotation.z=-h/12*Math.PI*2}tick();setInterval(tick,1000);
 
+// ================= ROOM TWO: Barbie room (the opposite of the workshop) =================
+// Pink and white, light wood, a touch of turquoise, rose-gold. No yellow.
+const room2=new THREE.Group();interior.add(room2);
+const tex=(w,h,draw,rep)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping}return t};
+const rnd2=(()=>{let v=123;return()=>{v=(v*16807)%2147483647;return v/2147483647}})();
+// Light oak floor
+const oakFloor=new THREE.MeshPhysicalMaterial({roughness:.38,clearcoat:.5,clearcoatRoughness:.25,map:tex(512,512,(g,w,h)=>{const bw=w/4;g.fillStyle='rgb(222,186,146)';g.fillRect(0,0,w,h);for(let i=0;i<4;i++){let y=-((i*97)%200);while(y<h){const L=200+rnd2()*140,k=.9+rnd2()*.14;g.fillStyle=`rgb(${226*k|0},${190*k|0},${150*k|0})`;g.fillRect(i*bw,y,bw,L);g.fillStyle='rgba(120,80,50,.35)';g.fillRect(i*bw,y,bw,2);y+=L}}
+ for(let i=0;i<600;i++){g.strokeStyle=`rgba(150,105,70,${.04+rnd2()*.06})`;g.beginPath();const x=rnd2()*w;g.moveTo(x,rnd2()*h);g.lineTo(x+(rnd2()-.5)*3,rnd2()*h);g.stroke()}for(let i=1;i<4;i++){g.fillStyle='rgba(110,70,40,.4)';g.fillRect(i*bw,0,1.5,h)}},true)});
+oakFloor.userData.worldScale=2.4;
+// Pink striped wallpaper with tiny hearts
+const paper=mat('#ffffff',.85);paper.map=tex(256,256,(g,w,h)=>{g.fillStyle='#f7b6cf';g.fillRect(0,0,w,h);for(let x=0;x<w;x+=64){g.fillStyle='#fbcade';g.fillRect(x,0,32,h)}g.fillStyle='rgba(255,255,255,.55)';g.font='18px system-ui';g.textAlign='center';for(let y=24;y<h;y+=64)for(let x=16;x<w;x+=64)g.fillText('♥',x+((y/64|0)%2)*32,y)},true);paper.userData.worldScale=1.2;
+const white2=mat('#fff7fa',.5),hotPink=new THREE.MeshPhysicalMaterial({color:0xe94b92,roughness:.25,clearcoat:1,clearcoatRoughness:.1}),
+ blush2=mat('#fbd0e1',.8),turq2=new THREE.MeshPhysicalMaterial({color:0x6fd3cf,roughness:.2,clearcoat:.8}),roseGold=mat('#e6aba5',.22,.9),
+ satin=new THREE.MeshPhysicalMaterial({color:0xf6a3c6,roughness:.42,sheen:1,sheenColor:new THREE.Color(0xffe2ef),sheenRoughness:.35});
+box(12,.2,12,0,.08,-31,oakFloor,room2);
+box(12,.18,12,0,4.7,-31,white2,room2);
+box(.16,4.65,12,-6,2.38,-31,paper,room2);box(.16,4.65,12,6,2.38,-31,paper,room2);box(12,4.65,.16,0,2.38,-37,paper,room2);
+box(4.9,4.65,.16,-3.55,2.38,-25,paper,room2);box(4.9,4.65,.16,3.55,2.38,-25,paper,room2);box(2.2,1.6,.16,0,3.85,-25,paper,room2);
+// White wainscoting, chair rail, crown moulding and skirting all around
+{const walls=[[0,-36.9,12,0],[-5.9,-31,12,1],[5.9,-31,12,1],[-3.55,-25.1,4.9,0],[3.55,-25.1,4.9,0]];
+ for(const [cx,cz,len,side] of walls){const W=side?.04:len,D=side?len:.04;
+  kit.box(side?.05:len,1.05,side?len:.05,cx,.7,cz,white2);kit.box(side?.08:len,.06,side?len:.08,cx,1.24,cz,white2);kit.box(side?.06:len,.14,side?len:.06,cx,.25,cz,white2);kit.box(side?.14:len,.16,side?len:.14,cx,4.53,cz,white2);
+  const n=Math.max(1,Math.floor(len/1.2));for(let i=0;i<n;i++){const o=-len/2+(i+.5)*len/n,pw=len/n-.24;
+   const px=side?cx+(cx<0?.03:-.03):cx+o,pz=side?cz+o:cz+(cz<-30?.03:-.03);
+   for(const [w,h,dx,dy] of [[pw,.03,0,.38],[pw,.03,0,-.38],[.03,.79,pw/2,0],[.03,.79,-pw/2,0]])kit.box(side?.03:w,h,side?w:.03,px+(side?0:dx),.7+dy,pz+(side?dx:0),white2)}}}
+// Door frame on the room side
+for(const x of [-1.17,1.17])kit.box(.14,3.1,.06,x,1.73,-25.11,white2);kit.box(2.48,.16,.06,0,3.3,-25.11,white2);
+
+// Crystal chandelier
+const chandelier=new THREE.Group();chandelier.position.set(0,3.75,-31.2);room2.add(chandelier);
+{const bulbMat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xfff0f6,emissiveIntensity:3});const crystal=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:0,transmission:1,thickness:.05,ior:1.9,iridescence:.6});
+ {const stem=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.85,8),roseGold);stem.position.y=.5;chandelier.add(stem)}
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.55,.025,10,48),roseGold);ring.rotation.x=Math.PI/2;chandelier.add(ring);
+ const ring2=new THREE.Mesh(new THREE.TorusGeometry(.3,.02,10,40),roseGold);ring2.rotation.x=Math.PI/2;ring2.position.y=-.25;chandelier.add(ring2);
+ for(let i=0;i<8;i++){const a=i/8*Math.PI*2,x=Math.cos(a)*.55,z=Math.sin(a)*.55;const cup=new THREE.Mesh(new THREE.CylinderGeometry(.04,.025,.06,12),roseGold);cup.position.set(x,.03,z);chandelier.add(cup);
+  const candle=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.12,10),white2);candle.position.set(x,.12,z);chandelier.add(candle);const b=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),bulbMat);b.position.set(x,.2,z);b.scale.y=1.5;chandelier.add(b)}
+ const drops=new THREE.InstancedMesh(new THREE.OctahedronGeometry(.035),crystal,64);const d=new THREE.Object3D();
+ for(let i=0;i<64;i++){const ring=i<40,a=(ring?i/40:(i-40)/24)*Math.PI*2,r=ring?.55:.3;d.position.set(Math.cos(a)*r,(ring?-.08:-.33)-(i%3)*.06,Math.sin(a)*r);d.scale.set(1,1.8,1);d.updateMatrix();drops.setMatrixAt(i,d.matrix)}chandelier.add(drops);
+ const centre=new THREE.Mesh(new THREE.SphereGeometry(.09,16,12),crystal);centre.position.y=-.45;chandelier.add(centre)}
+const chLight=new THREE.PointLight(0xfff0f4,26,12,1.6);chLight.position.set(0,3.6,-31.2);chLight.castShadow=true;chLight.shadow.mapSize.set(512,512);room2.add(chLight);
+const fill2=new THREE.RectAreaLight(0xffeef5,1.6,8,8);fill2.position.set(0,4.55,-31);fill2.lookAt(0,0,-31);room2.add(fill2);
+
+// Curved satin sofa, tufted, facing the room
+const arcC=new THREE.Vector3(0,0,-33.3);
+function arcSlab(r0,r1,a0,a1,h,y,m){const s=new THREE.Shape();s.absarc(0,0,r1,a0,a1,false);s.absarc(0,0,r0,a1,a0,true);
+ const g=new THREE.ExtrudeGeometry(s,{depth:h,bevelEnabled:true,bevelThickness:.06,bevelSize:.06,bevelSegments:4,curveSegments:40});g.rotateX(-Math.PI/2);const o=new THREE.Mesh(g,m);o.position.set(arcC.x,y,arcC.z);o.castShadow=o.receiveShadow=true;room2.add(o);return o}
+const A0=Math.PI/2-.68,A1=Math.PI/2+.68;
+arcSlab(2.45,3.25,A0,A1,.28,.24,satin);                  // base
+arcSlab(2.5,3.2,A0+.01,A1-.01,.14,.58,blush2);            // seat cushion
+arcSlab(3.08,3.38,A0,A1,.82,.52,satin);                   // back
+for(const a of [A0-.02,A1+.02]){const g=new THREE.CylinderGeometry(.2,.2,.85,24);const arm=new THREE.Mesh(g,satin);arm.rotation.x=Math.PI/2;const r=2.85;arm.position.set(Math.cos(a)*r+arcC.x,.66,-Math.sin(a)*r+arcC.z);arm.rotation.z=0;arm.lookAt(arcC.x,.66,arcC.z);arm.rotateX(Math.PI/2);arm.castShadow=true;room2.add(arm)}
+for(let i=0;i<9;i++){const a=A0+.08+i*(A1-A0-.16)/8;const b=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),roseGold);b.position.set(Math.cos(a)*3.07+arcC.x,1.0+(i%2)*.22,-Math.sin(a)*3.07+arcC.z);room2.add(b)}
+// Throw pillows (floral, pink, turquoise)
+const floral=new THREE.MeshStandardMaterial({roughness:.8,map:tex(256,256,(g,w,h)=>{g.fillStyle='#fff3f7';g.fillRect(0,0,w,h);for(let i=0;i<26;i++){const x=rnd2()*w,y=rnd2()*h,r=10+rnd2()*12;g.fillStyle=['#f58bb6','#e94b92','#fbc4da'][i%3];for(let k=0;k<5;k++){g.beginPath();g.arc(x+Math.cos(k*1.26)*r*.6,y+Math.sin(k*1.26)*r*.6,r*.5,0,7);g.fill()}g.fillStyle='#7fd8d3';g.beginPath();g.ellipse(x+r,y+r*.4,r*.5,r*.22,.6,0,7);g.fill()}})});
+const pillowGeo=new RoundedBoxGeometry(.55,.48,.16,3,.07);
+[[A0+.25,floral],[A0+.55,hotPink],[Math.PI/2,turq2],[A1-.55,hotPink],[A1-.25,floral]].forEach(([a,m],i)=>{const p=new THREE.Mesh(pillowGeo,m);const r=2.92;p.position.set(Math.cos(a)*r+arcC.x,.98,-Math.sin(a)*r+arcC.z);p.lookAt(arcC.x,.85,arcC.z);p.rotateZ((i-2)*.12);p.rotateX(-.25);p.castShadow=true;room2.add(p)});
+
+// Heart frame above the sofa with Ricardo's favourite photo
+function heartShape(s){const h=new THREE.Shape();h.moveTo(0,-s*.95);h.bezierCurveTo(-s*.25,-s*.7,-s*1.05,-s*.25,-s*1.0,s*.25);h.bezierCurveTo(-s*.95,s*.78,-s*.32,s*.98,0,s*.52);h.bezierCurveTo(s*.32,s*.98,s*.95,s*.78,s*1.0,s*.25);h.bezierCurveTo(s*1.05,-s*.25,s*.25,-s*.7,0,-s*.95);return h}
+const heart=new THREE.Group();heart.position.set(0,2.95,-36.86);room2.add(heart);
+{const outer=heartShape(.95),inner=heartShape(.8);outer.holes.push(new THREE.Path(inner.getPoints(48).reverse()));
+ const fg=new THREE.ExtrudeGeometry(outer,{depth:.06,bevelEnabled:true,bevelThickness:.03,bevelSize:.03,bevelSegments:4,curveSegments:48});
+ const frame=new THREE.Mesh(fg,new THREE.MeshPhysicalMaterial({color:0xfff4f8,roughness:.3,clearcoat:1}));frame.castShadow=true;heart.add(frame);
+ const trim=new THREE.Mesh(new THREE.ExtrudeGeometry((()=>{const o=heartShape(.83),i=heartShape(.8);o.holes.push(new THREE.Path(i.getPoints(48).reverse()));return o})(),{depth:.075,bevelEnabled:false,curveSegments:48}),roseGold);heart.add(trim);
+ const pg=new THREE.ShapeGeometry(heartShape(.8),48);pg.computeBoundingBox();const bb=pg.boundingBox,uv=pg.attributes.uv,pos=pg.attributes.position,S=Math.max(bb.max.x-bb.min.x,bb.max.y-bb.min.y);
+ for(let i=0;i<uv.count;i++)uv.setXY(i,(pos.getX(i)-bb.min.x)/S+(S-(bb.max.x-bb.min.x))/S/2,(pos.getY(i)-bb.min.y)/S+(S-(bb.max.y-bb.min.y))/S/2);
+ const placeholder=tex(512,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#ffd1e4');gr.addColorStop(1,'#f78bb8');g.fillStyle=gr;g.fillRect(0,0,w,h);g.fillStyle='#fff';g.textAlign='center';g.font='italic 700 46px Georgia,serif';g.fillText('Franzi',w/2,h*.44);g.font='60px system-ui';g.fillText('♥',w/2,h*.56);g.font='italic 700 46px Georgia,serif';g.fillText('Ricardo',w/2,h*.7)});
+ const photoMat=new THREE.MeshStandardMaterial({map:placeholder,roughness:.35});const photo=new THREE.Mesh(pg,photoMat);photo.position.z=.02;heart.add(photo);
+ // Photo comes from the private Supabase bucket when connected, else from a local file if one is deployed.
+ const useImg=url=>new THREE.TextureLoader().load(url,t=>{t.colorSpace=THREE.SRGBColorSpace;const a=t.image.width/t.image.height;t.repeat.set(a>1?1/a:1,a>1?1:a);t.offset.set(a>1?(1-1/a)/2:0,a>1?0:(1-a)*.55);photoMat.map=t;photoMat.needsUpdate=true});
+ import('./dates/dates.js').then(async m=>{const u=await m.roomPhotoUrl();if(u)useImg(u);else fetch('assets/room/lieblingsbild.jpg',{method:'HEAD'}).then(r=>{if(r.ok)useImg('assets/room/lieblingsbild.jpg')}).catch(()=>{})}).catch(()=>{})}
+// Sconces either side of the heart
+for(const x of [-2.05,2.05]){kit.box(.12,.2,.04,x,2.75,-36.9,roseGold);kit.cyl(.012,.012,.25,x,2.88,-36.78,roseGold,Math.PI/2.6);
+ const shade=new THREE.Mesh(new THREE.CylinderGeometry(.09,.15,.2,20,1,true),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffe6f0,emissiveIntensity:.9,side:THREE.DoubleSide}));shade.position.set(x,3.1,-36.68);room2.add(shade);
+ const l=new THREE.PointLight(0xffd9e8,2.2,4,2);l.position.set(x,3.05,-36.6);room2.add(l)}
+
+// Pink lacquered coffee table, the 100-dates box sits on it
+const table=new THREE.Group();table.position.set(0,.18,-31.9);room2.add(table);
+{const top=new THREE.Mesh(new RoundedBoxGeometry(1.7,.07,.85,3,.03),hotPink);top.position.y=.44;table.add(top);
+ for(const s of [-1,1]){const end=new THREE.Mesh(new THREE.TorusGeometry(.2,.035,10,24,Math.PI),hotPink);end.position.set(s*.72,.22,0);end.rotation.set(0,Math.PI/2,s>0?-Math.PI/2:Math.PI/2);end.scale.set(1,1.05,1);table.add(end)}
+ const shelf=new THREE.Mesh(new RoundedBoxGeometry(1.5,.04,.75,2,.015),white2);shelf.position.y=.12;table.add(shelf);
+ table.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true}})}
+const dateBox=new THREE.Group();dateBox.position.set(-.25,.18+.48,-31.9);room2.add(dateBox);
+{const b=new THREE.Mesh(new RoundedBoxGeometry(.42,.24,.3,3,.03),new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:.3,clearcoat:1,map:tex(256,256,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#e94b92';for(let y=0;y<h;y+=32)for(let x=(y/32%2)*16;x<w;x+=32){g.font='16px system-ui';g.fillText('♥',x,y+20)}})}));b.position.y=.12;dateBox.add(b);
+ const lid=new THREE.Mesh(new RoundedBoxGeometry(.45,.06,.33,3,.02),hotPink);lid.position.y=.26;dateBox.add(lid);
+ const label=new THREE.Mesh(new THREE.PlaneGeometry(.34,.09),new THREE.MeshBasicMaterial({map:tex(256,64,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#e0337f';g.font='900 36px system-ui';g.textAlign='center';g.fillText('100 DATES',w/2,46)}),toneMapped:false}));label.position.set(0,.13,.152);dateBox.add(label);
+ const bow=new THREE.Mesh(new THREE.TorusKnotGeometry(.045,.012,40,6,2,3),turq2);bow.position.y=.31;dateBox.add(bow)}
+// pink candles and a book stack on the table
+for(const [x,h] of [[.45,.2],[.58,.14]]){kit.cyl(.035,.035,h,x,.18+.475+h/2,-31.75,white2);kit.cyl(.045,.04,.02,x,.18+.48,-31.75,roseGold)}
+kit.box(.36,.05,.26,.35,.18+.505,-32.05,turq2);kit.box(.32,.04,.24,.36,.18+.55,-32.04,hotPink);
+// Two tufted satin ottomans
+for(const x of [-.75,.75]){const o=new THREE.Mesh(new RoundedBoxGeometry(.72,.42,.72,4,.12),satin);o.position.set(x,.18+.27,-30.55);o.castShadow=o.receiveShadow=true;room2.add(o);
+ for(const dx of [-.18,.18])for(const dz of [-.18,.18])kit.add(new THREE.SphereGeometry(.022,8,6),roseGold,x+dx,.18+.48,-30.55+dz);
+ for(const dx of [-.28,.28])for(const dz of [-.28,.28])kit.cyl(.03,.02,.08,x+dx,.22,-30.55+dz,roseGold)}
+// Pink-and-white check rug
+{const m=new THREE.MeshStandardMaterial({roughness:.95,map:tex(512,384,(g,w,h)=>{const s=48;for(let y=0;y<h;y+=s)for(let x=0;x<w;x+=s){g.fillStyle=((x+y)/s)%2?'#fff3f7':'#f58bb6';g.fillRect(x,y,s,s)}for(let i=0;i<20000;i++){g.fillStyle=`rgba(255,255,255,${rnd2()*.12})`;g.fillRect(rnd2()*w,rnd2()*h,1,2)}g.strokeStyle='#fff';g.lineWidth=10;g.strokeRect(5,5,w-10,h-10)})});
+ const rug2=new THREE.Mesh(new THREE.PlaneGeometry(5,3.75),m);rug2.rotation.x=-Math.PI/2;rug2.position.set(0,.186,-32);rug2.receiveShadow=true;room2.add(rug2)}
+
+// Wheel of fortune for dates on the right wall
+const wheel=new THREE.Group();wheel.position.set(5.82,2.35,-30.6);wheel.rotation.y=-Math.PI/2;room2.add(wheel);
+const wheelDisc=new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,.06,72),[roseGold,new THREE.MeshStandardMaterial({roughness:.35,map:tex(512,512,(g,w,h)=>{const n=20,R=w/2,a=Math.PI*2/n;const cols=['#ff5fa2','#ffffff','#ffb3d1','#7fe0dc'];for(let i=0;i<n;i++){g.beginPath();g.moveTo(R,R);g.arc(R,R,R,i*a,(i+1)*a);g.closePath();g.fillStyle=cols[i%4];g.fill();g.strokeStyle='#ffffffcc';g.stroke();const m=(i+.5)*a;g.save();g.translate(R+Math.cos(m)*R*.72,R+Math.sin(m)*R*.72);g.rotate(m+Math.PI/2);g.fillStyle=i%4===0?'#fff':'#e0337f';g.font='28px system-ui';g.textAlign='center';g.fillText('♥',0,10);g.restore()}
+ g.beginPath();g.arc(R,R,70,0,7);g.fillStyle='#fff';g.fill();g.lineWidth=10;g.strokeStyle='#e94b92';g.stroke();g.fillStyle='#e0337f';g.font='900 30px system-ui';g.textAlign='center';g.fillText('DATE',R,R+2);g.font='800 22px system-ui';g.fillText('drehen!',R,R+28)})}),roseGold]);
+wheelDisc.rotation.set(Math.PI/2,Math.PI/2,0);wheel.add(wheelDisc);
+{const rim=new THREE.Mesh(new THREE.TorusGeometry(.93,.05,12,72),hotPink);wheel.add(rim);const bulb=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffe3ef,emissiveIntensity:2.2});
+ for(let i=0;i<24;i++){const a=i/24*Math.PI*2,b=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),bulb);b.position.set(Math.cos(a)*.93,Math.sin(a)*.93,.05);wheel.add(b)}
+ const ptr=new THREE.Mesh(new THREE.ConeGeometry(.09,.22,3),turq2);ptr.rotation.z=Math.PI;ptr.position.set(0,1.02,.08);wheel.add(ptr);
+ const sign=new THREE.Mesh(new THREE.PlaneGeometry(1.7,.34),new THREE.MeshBasicMaterial({transparent:true,toneMapped:false,map:tex(512,104,(g,w,h)=>{g.shadowColor='#ff4fa0';g.shadowBlur=18;g.fillStyle='#fff';g.font='italic 900 60px Georgia,serif';g.textAlign='center';g.fillText('Date-Glücksrad',w/2,70)})}));sign.position.set(0,1.32,.02);wheel.add(sign)}
+let wheelSpin=0;
+
+// Retro pink mailbox on a post, by the door
+const mailbox=new THREE.Group();mailbox.position.set(-4.9,.18,-26.3);mailbox.rotation.y=Math.PI/2;room2.add(mailbox);
+{const post=new THREE.Mesh(new THREE.BoxGeometry(.1,1.0,.1),white2);post.position.y=.5;mailbox.add(post);
+ const body=new THREE.Mesh(new THREE.BoxGeometry(.32,.22,.55),hotPink);body.position.y=1.11;mailbox.add(body);
+ const top=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.55,24,1,false,0,Math.PI),hotPink);top.rotation.set(Math.PI/2,0,Math.PI/2);top.position.y=1.22;mailbox.add(top);
+ const door=new THREE.Mesh(new THREE.CircleGeometry(.16,24,0,Math.PI),white2);door.position.set(0,1.22,.276);mailbox.add(door);const door2=new THREE.Mesh(new THREE.PlaneGeometry(.32,.22),white2);door2.position.set(0,1.11,.276);mailbox.add(door2);
+ const heartM=new THREE.Mesh(new THREE.ShapeGeometry(heartShape(.07)),hotPink);heartM.position.set(0,1.16,.28);mailbox.add(heartM);
+ const flagPole=new THREE.Mesh(new THREE.BoxGeometry(.02,.28,.03),turq2);flagPole.position.set(.17,1.25,-.1);mailbox.add(flagPole);
+ const flag=new THREE.Mesh(new THREE.BoxGeometry(.02,.1,.14),turq2);flag.position.set(.17,1.35,-.04);mailbox.add(flag);mailbox.userData.flag=flagPole;
+ const label=new THREE.Mesh(new THREE.PlaneGeometry(.5,.12),new THREE.MeshBasicMaterial({transparent:true,map:tex(256,64,(g,w,h)=>{g.fillStyle='#fff';g.font='italic 900 40px Georgia,serif';g.textAlign='center';g.fillText('Post',w/2,44)})}));label.rotation.y=Math.PI/2;label.position.set(.162,1.11,0);mailbox.add(label);
+ mailbox.traverse(o=>{if(o.isMesh)o.castShadow=true})}
+
+// White console with the open photo album, turquoise vase with roses
+const album=new THREE.Group();album.position.set(5.55,.18,-34.6);room2.add(album);
+{const top=new THREE.Mesh(new RoundedBoxGeometry(.5,.05,1.6,2,.02),white2);top.position.y=.82;album.add(top);
+ for(const dz of [-.72,.72]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.025,.018,.8,12),roseGold);leg.position.set(-.18,.41,dz);album.add(leg)}
+ const pageMat=new THREE.MeshStandardMaterial({roughness:.7,map:tex(256,256,(g,w,h)=>{g.fillStyle='#fffaf3';g.fillRect(0,0,w,h);g.fillStyle='#f6b8cf';g.fillRect(30,30,90,90);g.fillRect(136,40,90,70);g.fillStyle='#7fd8d3';g.fillRect(40,140,80,80);g.fillStyle='#e0337f';g.font='italic 22px Georgia,serif';g.fillText('Unsere Dates',120,190)})});
+ const cover=new THREE.Mesh(new RoundedBoxGeometry(.42,.03,.62,2,.01),hotPink);cover.position.set(-.02,.86,0);album.add(cover);
+ for(const s of [-1,1]){const p=new THREE.Mesh(new THREE.BoxGeometry(.38,.02,.29),pageMat);p.position.set(-.02,.885,s*.15);p.rotation.x=s*.06;album.add(p)}
+ const vase=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[.07,0],[.09,.08],[.06,.2],[.05,.26],[.07,.3]].map(([a,b])=>new THREE.Vector2(a,b)),24),turq2);vase.position.set(-.05,.845,.6);album.add(vase);
+ for(let i=0;i<9;i++){const r=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),i%3?hotPink:satin);r.position.set(-.05+(rnd2()-.5)*.2,1.2+rnd2()*.12,.6+(rnd2()-.5)*.2);r.scale.y=.8;album.add(r)}
+ const lbl=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.26),new THREE.MeshBasicMaterial({transparent:true,toneMapped:false,map:tex(512,128,(g,w,h)=>{g.shadowColor='#ff4fa0';g.shadowBlur=16;g.fillStyle='#fff';g.font='italic 900 66px Georgia,serif';g.textAlign='center';g.fillText('Fotobuch',w/2,86)})}));lbl.rotation.y=-Math.PI/2;lbl.position.set(.3,1.65,0);album.add(lbl);
+ album.traverse(o=>{if(o.isMesh)o.castShadow=true})}
+
+// Turquoise table lamp next to the sofa, pampas grass in the corner, neon on the left wall
+{kit.add(new THREE.LatheGeometry([[0,0],[.13,0],[.15,.1],[.09,.32],[.03,.42]].map(([a,b])=>new THREE.Vector2(a,b)),24),turq2,3.55,.18,-35.3);kit.box(.3,.5,.3,3.55,.43,-35.3,white2);
+ const shade=new THREE.Mesh(new THREE.CylinderGeometry(.16,.24,.3,24,1,true),new THREE.MeshStandardMaterial({color:0xfff5f9,emissive:0xffdbe9,emissiveIntensity:.8,side:THREE.DoubleSide}));shade.position.set(3.55,1.33,-35.3);room2.add(shade);
+ kit.box(.3,.5,.3,3.55,.43,-35.3,white2);const lampL=new THREE.PointLight(0xffd0e3,3,5,2);lampL.position.set(3.55,1.3,-35.1);room2.add(lampL);
+ kit.add(new THREE.LatheGeometry([[0,0],[.16,0],[.2,.35],[.12,.65],[.13,.7]].map(([a,b])=>new THREE.Vector2(a,b)),24),white2,-5.35,.18,-36.35);
+ for(let i=0;i<14;i++){const a=rnd2()*6.3,l=.7+rnd2()*.6,tilt=.12+rnd2()*.25;const x=-5.35+Math.cos(a)*Math.sin(tilt)*l,z=-36.35+Math.sin(a)*Math.sin(tilt)*l,y=.88+Math.cos(tilt)*l;
+  kit.cyl(.006,.006,l,(x-5.35)/2,(y+.88)/2,(z-36.35)/2,mat('#c9a98e',.8),Math.sin(a)*tilt,0,-Math.cos(a)*tilt);const plume=new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),blush2);plume.scale.set(.8,2.4,.8);plume.position.set(x,y,z);plume.rotation.set(Math.sin(a)*tilt,0,-Math.cos(a)*tilt);room2.add(plume)}
+ const neon=new THREE.Mesh(new THREE.PlaneGeometry(3.4,.85),new THREE.MeshBasicMaterial({transparent:true,toneMapped:false,depthWrite:false,map:tex(1024,256,(g,w,h)=>{g.textAlign='center';g.textBaseline='middle';g.font='italic 700 120px "Brush Script MT","Segoe Script",Georgia,serif';g.shadowColor='#ff3d9a';g.shadowBlur=40;g.strokeStyle='#ff7dbd';g.lineWidth=10;g.strokeText('Franzi ♥ Ricardo',w/2,h/2);g.shadowBlur=14;g.fillStyle='#ffe6f2';g.fillText('Franzi ♥ Ricardo',w/2,h/2)})}));
+ neon.rotation.y=Math.PI/2;neon.position.set(-5.88,3.2,-31.5);room2.add(neon);const nl=new THREE.PointLight(0xff5fae,3,5,2);nl.position.set(-5.3,3.2,-31.5);room2.add(nl)}
+// Floral armchair angled towards the table
+place('./assets/models/chair.glb',-3.6,.18,-30.9,Math.PI*.72,1.25).then(o=>o.traverse(c=>{if(c.isMesh&&/fabric/i.test(c.material.name)){c.material=c.material.clone();c.material.color.set('#f7a8c9');if(c.material.sheenColor)c.material.sheenColor.set('#ffe0ef')}}));
+
+// Walking limits inside the room
+const room2Obstacles=[[0,-35.9,2.7,1.1],[-2.2,-34.6,.6,.7],[2.2,-34.6,.6,.7],[0,-31.9,.95,.5],[0,-30.55,1.2,.4],[-3.6,-30.9,.55,.5],[-4.9,-26.3,.35,.4],[5.5,-34.6,.4,.85],[3.55,-35.3,.3,.3],[-5.35,-36.35,.35,.35]];
+// Things you can tap in the Barbie room
+const roomTaps=[[wheel,'wheel'],[dateBox,'wheel'],[mailbox,'mail'],[album,'album']];
+
 kit.build();
 
 // --- Wear on the floor: tyre marks, oil stains, scuffs and grime along the walls
@@ -668,12 +773,21 @@ renderer.domElement.addEventListener('pointermove',e=>{
 });
 // A short tap on the TV (from up to 12 m away) opens the game picker.
 const tapRay=new THREE.Raycaster();tapRay.far=12;
-function tappedTV(e){const r=renderer.domElement.getBoundingClientRect();
+// Tappable things: the TV in the garage, and wheel, date box, mailbox, album in the Barbie room.
+const tapTargets=[[tvGroup,'games'],...roomTaps];
+function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
  tapRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
- return tapRay.intersectObject(tvGroup,true).length>0}
+ let best=null;for(const [obj,what] of tapTargets){const h=tapRay.intersectObject(obj,true)[0];if(h&&(!best||h.distance<best.d))best={d:h.distance,what}}
+ // walls between you and the thing block the tap
+ if(best){const wallHit=tapRay.intersectObjects([...interior.children.filter(o=>o.isMesh&&o.geometry&&o.geometry.type!=='PlaneGeometry')],false)[0];if(wallHit&&wallHit.distance<best.d-.3)return null}
+ return best&&best.what}
+const datesUI=import('./dates/dates.js');
+function openThing(what){touchWalk=0;strafeTouch=0;
+ if(what==='games')gamePick.classList.add('on');
+ else datesUI.then(m=>({wheel:m.openWheel,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
 function releasePointer(e){
  const p=fingers.get(e.pointerId);if(!p)return;
- if(e.type==='pointerup'&&inside&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<14&&performance.now()-p.t<400&&tappedTV(e)){gamePick.classList.add('on');touchWalk=0;strafeTouch=0}
+ if(e.type==='pointerup'&&inside&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<14&&performance.now()-p.t<400){const what=tappedThing(e);if(what)openThing(what)}
  if(p.kind==='move'){touchWalk=0;strafeTouch=0;walkOrigin=null}
  if(p.kind==='look')lookPointer=null;
  if(p.kind==='gate'&&dragGate){setGoal(amount>.4?1:0);dragGate=false}
@@ -716,7 +830,7 @@ if(inside){
  const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
  const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-36.35,-1.6);
  const obstacles=[[-7.65,-2.3,2.35,.45],[7.65,-2.3,2.35,.45],[10.35,-3.7,.6,1.25],[10.25,-6.6,.45,.45],[-7.95,-5.8,.3,.3],[-2.45,-5.8,.3,.3],[-8.6,-8.6,.45,.55],[10.45,-14.4,.55,.7],[-5.2,-5.8,1.6,3.35],[-6.55,-19.8,.85,1.85],[-8.4,-23.15,1.75,.85],[-8.55,-19.8,.6,.95],[-8.45,-16.9,.6,.55],[-10.3,-19.8,.6,1.7],[-3.4,-24.4,1.3,.5],[9.75,-9.9,.65,3.3],[10.4,-21.4,.75,3.6],[7.8,-24.4,2.6,.75],[8.5,-18.2,1.95,.6],[-10.1,-8,.9,7.5],[-10.25,-16.9,.55,.55]];
- const blocked=(x,z)=>{if(z < -24.55){if(Math.abs(x)>5.55)return true;if(z > -25.4&&Math.abs(x)>1.02)return true;return Math.abs(x)<2.55&&z < -34.9&&z > -36.5}return obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)};
+ const blocked=(x,z)=>{if(z < -24.55){if(Math.abs(x)>5.55)return true;if(z > -25.4&&Math.abs(x)>1.02)return true;return room2Obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)}return obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)};
  if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
  if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;
 }else{velocityX=0;velocityZ=0}
