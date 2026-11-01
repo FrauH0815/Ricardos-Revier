@@ -12,7 +12,6 @@
 <div id="gamePick"><div class="panel"><h2>SPIELE</h2>
 <button class="g" data-g="angeln"><b>🎣 Angeln</b><small>Dorfteich, großer See, Fluss am Abend</small></button>
 <button class="g" data-g="kegeln"><b>🎳 Kegeln</b><small>Übungsbahn bis Meisterschaft</small></button>
-<button class="g" data-g="poker"><b>🃏 Poker am Tresen</b><small>Hold’em gegen 2, 3 oder 4 Computergegner</small></button>
 <button class="g" data-g="jagd"><b>🎯 Jagd</b><small>Schießstand, Lichtung, Dämmerung, Nebel</small></button>
 <button class="x" id="pickClose">Zurück in die Werkstatt</button></div></div>
 <div id="gameFrame"><button class="close" id="frameClose">✕ ZURÜCK</button><iframe title="Spiel" allow="autoplay; vibrate"></iframe></div><div id="credits" style="position:fixed;right:8px;bottom:5px;font-size:8px;opacity:.45;pointer-events:none">RAM: maregajavier · Sofa: Darmstadt Graphics Group · CC BY 4.0</div>
@@ -194,7 +193,7 @@ box(2.24,2.3,.012,0,1.2,.225,new THREE.MeshPhysicalMaterial({color:0xffffff,roug
 // TV shows the game menu; tapping the games button opens it.
 {const c=document.createElement('canvas');c.width=1024;c.height=576;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,1024,576);gr.addColorStop(0,'#0f2233');gr.addColorStop(1,'#2a1430');g.fillStyle=gr;g.fillRect(0,0,1024,576);
  g.textAlign='center';g.fillStyle='#ffd9a8';g.font='900 64px system-ui,Arial';g.fillText('RICARDOS SPIELE',512,120);
- [['🎣','ANGELN'],['🎳','KEGELN'],['🃏','POKER'],['🎯','JAGD']].forEach(([e,t],i)=>{const x=143+i*246;g.fillStyle='#ffffff14';g.fillRect(x-108,180,216,290);g.font='96px system-ui';g.fillText(e,x,330);g.fillStyle='#f3ebdf';g.font='800 32px system-ui,Arial';g.fillText(t,x,430)});
+ [['🎣','ANGELN'],['🎳','KEGELN'],['🎯','JAGD']].forEach(([e,t],i)=>{const x=200+i*312;g.fillStyle='#ffffff14';g.fillRect(x-130,180,260,300);g.font='110px system-ui';g.fillText(e,x,340);g.fillStyle='#f3ebdf';g.font='800 36px system-ui,Arial';g.fillText(t,x,440)});
  g.fillStyle='#ffd9a8';g.font='700 30px system-ui,Arial';g.fillText('▶  Bildschirm antippen zum Spielen',512,535);
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;tvScreen.map=t;tvScreen.emissiveMap=t;tvScreen.emissive.set(0xffffff);tvScreen.emissiveIntensity=.55;tvScreen.color.set(0x000000);tvScreen.needsUpdate=true}
 // Trophies won in the games stand in the cabinet as golden cups.
@@ -828,7 +827,10 @@ function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
  if(best){const wallHit=tapRay.intersectObjects([...interior.children.filter(o=>o.isMesh&&o.geometry&&o.geometry.type!=='PlaneGeometry')],false)[0];if(wallHit&&wallHit.distance<best.d-.3)return null}
  return best&&best.what}
 const datesUI=import('./dates/dates.js');
-function openThing(what){touchWalk=0;strafeTouch=0;
+// A tap on a 3D object opens a menu right under the finger; the browser then fires a click at the same
+// spot. Swallow clicks for a moment so that click doesn't hit a button in the freshly opened menu.
+let ghostUntil=0;addEventListener('click',e=>{if(performance.now()<ghostUntil){e.stopPropagation();e.preventDefault()}},true);
+function openThing(what){touchWalk=0;strafeTouch=0;ghostUntil=performance.now()+500;
  if(what==='poker'){gameFrame.querySelector('iframe').src='games/poker.html';gameFrame.classList.add('on')}
  else if(what==='games')gamePick.classList.add('on');
  else if(what==='door')toggleDoor();
