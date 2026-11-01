@@ -265,9 +265,26 @@ for(let i=0;i<3;i++){const g=new THREE.Mesh(new THREE.CylinderGeometry(.038,.03,
 // Open doorway into the adjoining room; hinged door stands open against the wall.
 for(const x of [-1.17,1.17])box(.11,3.23,.34,x,1.64,-24.68,beam,interior);
 box(2.48,.12,.35,0,3.31,-24.68,beam,interior);
-const openDoor=new THREE.Group();openDoor.position.set(1.12,0,-24.82);openDoor.rotation.y=-Math.PI/2;interior.add(openDoor);
-box(2.12,2.95,.09,-1.06,1.52,0,mat('#eee2e8',.55),openDoor);
-box(.09,.09,.15,-1.88,1.35,.1,chrome,openDoor);
+// The door to the Barbie room starts closed; tap it to swing it open (and again to close it).
+const openDoor=new THREE.Group();openDoor.position.set(1.12,0,-24.82);interior.add(openDoor);
+{const doorMat=new THREE.MeshStandardMaterial({color:0x2a2f33,roughness:.5,metalness:.35});
+ box(2.26,3.1,.09,-1.13,1.6,0,doorMat,openDoor); // slightly wider and taller than the opening, so nothing shows through
+ // garage side: plain workshop door with a small pink heart plaque as a hint
+ for(const y of [.75,2.25])box(1.8,.9,.02,-1.06,y,.055,mat('#30363b',.45,.4),openDoor);
+ const lever=box(.22,.04,.05,-1.82,1.25,.11,chrome,openDoor);box(.08,.18,.03,-1.9,1.25,.06,chrome,openDoor);
+ const plaque=new THREE.Mesh(new THREE.ShapeGeometry((()=>{const s=.13,h=new THREE.Shape();h.moveTo(0,-s*.95);h.bezierCurveTo(-s*.25,-s*.7,-s*1.05,-s*.25,-s,s*.25);h.bezierCurveTo(-s*.95,s*.78,-s*.32,s*.98,0,s*.52);h.bezierCurveTo(s*.32,s*.98,s*.95,s*.78,s,s*.25);h.bezierCurveTo(s*1.05,-s*.25,s*.25,-s*.7,0,-s*.95);return h})()),new THREE.MeshStandardMaterial({color:0xe94b92,emissive:0x5a0f2e,roughness:.3}));
+ plaque.position.set(-1.06,1.75,.07);openDoor.add(plaque);
+ // room side: white panel door with rose-gold knob
+ const inner=box(2.0,2.85,.02,-1.06,1.52,-.055,mat('#fff4f8',.5),openDoor);for(const y of [.85,2.2])box(1.6,.95,.015,-1.06,y,-.07,mat('#ffffff',.45),openDoor);
+ box(.09,.09,.12,-1.88,1.25,-.1,mat('#e6aba5',.22,.9),openDoor)}
+// Dark filler above the door so the pink room never peeks through the gap under the lintel.
+box(2.34,.3,.06,0,3.2,-24.74,mat('#1d2125',.6,.3),interior);
+let doorGoal=0,doorAmount=0;
+function toggleDoor(){const inDoorway=Math.abs(walker.x)<1.4&&walker.z<-23.9&&walker.z>-25.9;if(doorGoal===1&&inDoorway)return;doorGoal=doorGoal?0:1;doorSound(doorGoal)}
+let doorAudio;function doorSound(opening){try{doorAudio??=new (window.AudioContext||window.webkitAudioContext)();doorAudio.resume();const c=doorAudio,t=c.currentTime;
+ const click=c.createOscillator(),g=c.createGain();click.type='square';click.frequency.setValueAtTime(opening?180:140,t);g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+.08);click.connect(g).connect(c.destination);click.start(t);click.stop(t+.1);
+ const b=c.createBuffer(1,c.sampleRate*.9,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.sin(i/d.length*Math.PI)*.5;const n=c.createBufferSource();n.buffer=b;const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=opening?520:420;f.Q.value=6;const g2=c.createGain();g2.gain.value=.12;n.connect(f).connect(g2).connect(c.destination);n.start(t+.05)}catch{}}
+(function doorLoop(){requestAnimationFrame(doorLoop);if(Math.abs(doorGoal-doorAmount)<.001)return;doorAmount+=(doorGoal-doorAmount)*.06;if(Math.abs(doorGoal-doorAmount)<.002)doorAmount=doorGoal;const e=doorAmount*doorAmount*(3-2*doorAmount);openDoor.rotation.y=-e*Math.PI/2*.94})();
 
 // Pickup and work area have ample walking clearance
 // Pickup: Fahrzeugkörper, Fahrerkabine, Reifen, Kühler, Licht
@@ -786,7 +803,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
 // A short tap on the TV (from up to 12 m away) opens the game picker.
 const tapRay=new THREE.Raycaster();tapRay.far=12;
 // Tappable things: the TV in the garage, and wheel, date box, mailbox, album in the Barbie room.
-const tapTargets=[[tvGroup,'games'],...roomTaps];
+const tapTargets=[[tvGroup,'games'],[openDoor,'door'],...roomTaps];
 function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
  tapRay.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
  let best=null;for(const [obj,what] of tapTargets){const h=tapRay.intersectObject(obj,true)[0];if(h&&(!best||h.distance<best.d))best={d:h.distance,what}}
@@ -796,6 +813,7 @@ function tappedThing(e){const r=renderer.domElement.getBoundingClientRect();
 const datesUI=import('./dates/dates.js');
 function openThing(what){touchWalk=0;strafeTouch=0;
  if(what==='games')gamePick.classList.add('on');
+ else if(what==='door')toggleDoor();
  else datesUI.then(m=>({wheel:m.openDateBox,mail:m.openMailbox,album:m.openAlbum})[what]()).catch(err=>console.error(err))}
 function releasePointer(e){
  const p=fingers.get(e.pointerId);if(!p)return;
@@ -845,7 +863,7 @@ if(inside){
  const nextX=THREE.MathUtils.clamp(walker.x+velocityX*dt,-9.8,9.8);
  const nextZ=THREE.MathUtils.clamp(walker.z+velocityZ*dt,-36.35,-1.6);
  const obstacles=[[-7.65,-2.3,2.35,.45],[7.65,-2.3,2.35,.45],[10.35,-3.7,.6,1.25],[10.25,-6.6,.45,.45],[-7.95,-5.8,.3,.3],[-2.45,-5.8,.3,.3],[-8.6,-8.6,.45,.55],[10.45,-14.4,.55,.7],[-5.2,-5.8,1.6,3.35],[-6.55,-19.8,.85,1.85],[-8.4,-23.15,1.75,.85],[-8.55,-19.8,.6,.95],[-8.45,-16.9,.6,.55],[-10.3,-19.8,.6,1.7],[-3.4,-24.4,1.3,.5],[9.75,-9.9,.65,3.3],[10.4,-21.4,.75,3.6],[7.8,-24.4,2.6,.75],[8.5,-18.2,1.95,.6],[-10.1,-8,.9,7.5],[-10.25,-16.9,.55,.55]];
- const blocked=(x,z)=>{if(z < -24.55){if(Math.abs(x)>5.55)return true;if(z > -25.4&&Math.abs(x)>1.02)return true;return room2Obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)}return obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)};
+ const blocked=(x,z)=>{if(z < -24.55&&doorAmount<.85)return true;if(z < -24.55){if(Math.abs(x)>5.55)return true;if(z > -25.4&&Math.abs(x)>1.02)return true;return room2Obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)}return obstacles.some(([cx,cz,hx,hz])=>Math.abs(x-cx)<hx&&Math.abs(z-cz)<hz)};
  if(!blocked(nextX,walker.z))walker.x=nextX;else velocityX=0;
  if(!blocked(walker.x,nextZ))walker.z=nextZ;else velocityZ=0;
 }else{velocityX=0;velocityZ=0}
