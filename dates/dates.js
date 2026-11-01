@@ -143,7 +143,11 @@ async function needLogin(body,then){if(store.kind!=='supabase'||await store.logg
 async function whoAmI(body,then){const me=await store.me();if(me)return me;
  body.innerHTML=`<h2>Wer bist du?</h2><p class="sub">Das merkt sich dieses Handy.</p><div class="dr-pick"><button class="dr-btn">Franzi</button><button class="dr-btn turq">Ricardo</button></div>`;
  body.querySelectorAll('button').forEach(b=>b.onclick=async()=>{await store.setMe(b.textContent);then()});return null}
-async function shrink(file){const img=await createImageBitmap(file);const k=Math.min(1,1600/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*k|0;c.height=img.height*k|0;c.getContext('2d').drawImage(img,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.85))}
+// Downscale a photo to max 1600 px as JPEG. Works on phones that lack createImageBitmap for some files.
+async function shrink(file){if(!(file instanceof Blob))throw new Error('Kein Foto ausgewählt.');
+ let img;try{img=await createImageBitmap(file)}catch{img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('Dieses Foto kann der Browser nicht lesen. Bitte als JPG speichern und nochmal versuchen.'));i.src=URL.createObjectURL(file)})}
+ const w=img.width||img.naturalWidth,h=img.height||img.naturalHeight,k=Math.min(1,1600/Math.max(w,h));const c=document.createElement('canvas');c.width=w*k|0;c.height=h*k|0;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+ const out=await new Promise(r=>c.toBlob(r,'image/jpeg',.85));if(!out)throw new Error('Foto konnte nicht umgewandelt werden.');return out}
 const tagText=x=>[x.kosten===0?'kostenlos':`bis ${x.kosten} €`,x.ort==='zuhause'?'zu Hause':'unterwegs',{kurz:'bis 1 Std.',mittel:'1–3 Std.',lang:'länger'}[x.dauer]];
 
 // ---------------- date box (generator) ----------------
@@ -192,7 +196,7 @@ async function documentDate(id){const body=boxOv.querySelector('.dr-body');const
  <label class="f">UNSERE ERINNERUNG</label><textarea placeholder="Was war schön, lustig, besonders?"></textarea>
  <div class="dr-row" style="margin-top:12px"><button class="dr-btn save" style="flex:1">Ins Fotobuch eintragen</button><button class="dr-btn alt back">Zurück</button></div><div class="dr-note msg"></div>`;
  const inp=body.querySelector('input[type=file]'),th=body.querySelector('.dr-thumbs');
- inp.onchange=()=>{files=[...files,...inp.files];th.innerHTML=files.map(f=>`<img src="${URL.createObjectURL(f)}" alt="">`).join('')};
+ inp.onchange=()=>{if(!inp.files||!inp.files.length)return;files=[...files,...inp.files];th.innerHTML=files.map(f=>`<img src="${URL.createObjectURL(f)}" alt="">`).join('')};
  body.querySelector('.back').onclick=()=>renderBox();
  body.querySelector('.save').onclick=async e=>{const btn=e.currentTarget,msg=body.querySelector('.msg');btn.disabled=true;
   try{msg.textContent=files.length?'Fotos werden vorbereitet …':'Wird gespeichert …';const blobs=[];for(const f of files)blobs.push(await shrink(f));
@@ -223,7 +227,7 @@ async function renderHeart(){const body=heartOv.querySelector('.dr-body');if(awa
  <label class="dr-btn turq" style="display:block;text-align:center;margin-top:10px">📷 Foto auswählen<input type="file" accept="image/*" hidden></label>
  <button class="dr-btn save" style="width:100%;margin-top:8px" disabled>Ins Herz hängen 💗</button><div class="dr-note msg"></div>${note()}`;
  const inp=body.querySelector('input'),pv=body.querySelector('.pv'),save=body.querySelector('.save'),msg=body.querySelector('.msg');
- inp.onchange=()=>{file=inp.files[0];if(!file)return;pv.src=URL.createObjectURL(file);pv.style.display='';body.querySelector('.dr-empty')?.remove();save.disabled=false};
+ inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;file=f;pv.src=URL.createObjectURL(file);pv.style.display='';body.querySelector('.dr-empty')?.remove();save.disabled=false};
  save.onclick=async()=>{save.disabled=true;msg.textContent='Wird hochgeladen …';try{await store.setRoomPhoto(await shrink(file));msg.textContent='Hängt im Herz! 💗';window.dispatchEvent(new CustomEvent('rr-dates-auth',{detail:{loggedIn:true}}));setTimeout(()=>close(heartOv),900)}catch(e){save.disabled=false;msg.textContent='Hochladen hat nicht geklappt: '+e.message}}}
 
 // ---------------- photo album ----------------
